@@ -27,9 +27,13 @@ def navegar_a_procesos(usuario, puesto):
 
 
 def Capacitacion(usuario, puesto):
-    # Obtener nombre completo del usuario
-    nombre_df = fetch_df("SELECT nombre FROM public.usuarios WHERE usuario = %s", params=[usuario])
-    nombre_usuario = nombre_df.loc[0, 'nombre'] if not nombre_df.empty else ""
+    # Obtener nombre completo Y perfil del usuario (UNA SOLA CONSULTA)
+    usuario_info = fetch_one(
+        "SELECT nombre, perfil FROM public.usuarios WHERE usuario = %s", 
+        params=[usuario]
+    )
+    nombre_usuario = usuario_info["nombre"] if usuario_info else ""
+    perfil = str(usuario_info["perfil"]) if usuario_info else "0"
 
     # --- Sidebar (común a todos los perfiles) ---
     ph_sidebar = []
@@ -66,9 +70,9 @@ def Capacitacion(usuario, puesto):
     placeholders_contenido.append(ph_mensaje)
 
     # =========================================================
-    # COORDINADOR
+    # COORDINADOR o PERFIL 1 (Administrador)
     # =========================================================
-    if puesto == "Coordinador":
+    if puesto == "Coordinador" or perfil == "1":
         # --- Registro de capacitación ---
         ph_registro = st.empty()
         placeholders_contenido.append(ph_registro)
@@ -132,74 +136,32 @@ def Capacitacion(usuario, puesto):
             key="filtro_8"
         )
 
-        # Cargar datos según filtro
-        if filtro_val == "Todos":
-            data = fetch_df(
-                """
-                SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
-                       fecha, tema, horas, observaciones, reporte
-                FROM public.capacitaciones
-                WHERE fecha::date >= %s AND fecha::date <= %s
-                ORDER BY fecha DESC
-                """,
-                params=[fecha_ini, fecha_fin]
-            )
-        elif filtro_val == "Operarios":
-            data = fetch_df(
-                """
-                SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
-                       fecha, tema, horas, observaciones, reporte
-                FROM public.capacitaciones
-                WHERE puesto = 'Operario Catastral' AND fecha::date >= %s AND fecha::date <= %s
-                ORDER BY fecha DESC
-                """,
-                params=[fecha_ini, fecha_fin]
-            )
-        elif filtro_val == "Profesional Jurídico":
-            data = fetch_df(
-                """
-                SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
-                       fecha, tema, horas, observaciones, reporte
-                FROM public.capacitaciones
-                WHERE puesto = 'Profesional Jurídico' AND fecha::date >= %s AND fecha::date <= %s
-                ORDER BY fecha DESC
-                """,
-                params=[fecha_ini, fecha_fin]
-            )
-        elif filtro_val == "Propio":
-            data = fetch_df(
-                """
-                SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
-                       fecha, tema, horas, observaciones, reporte
-                FROM public.capacitaciones
-                WHERE usuario = %s AND fecha::date >= %s AND fecha::date <= %s
-                ORDER BY fecha DESC
-                """,
-                params=[usuario, fecha_ini, fecha_fin]
-            )
-        elif filtro_val == "Personal Asignado":
-            data = fetch_df(
-                """
-                SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
-                       fecha, tema, horas, observaciones, reporte
-                FROM public.capacitaciones
-                WHERE supervisor = %s AND fecha::date >= %s AND fecha::date <= %s
-                ORDER BY fecha DESC
-                """,
-                params=[nombre_usuario, fecha_ini, fecha_fin]
-            )
-        elif filtro_val == "Reportados":
-            data = fetch_df(
-                """
-                SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
-                       fecha, tema, horas, observaciones, reporte
-                FROM public.capacitaciones
-                WHERE reporte = %s AND fecha::date >= %s AND fecha::date <= %s
-                ORDER BY fecha DESC
-                """,
-                params=[nombre_usuario, fecha_ini, fecha_fin]
-            )
-
+        # ============ UNA SOLA CONSULTA A LA BD ============ #
+        data = fetch_df(
+            """
+            SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
+                   fecha, tema, horas, observaciones, reporte
+            FROM public.capacitaciones
+            WHERE fecha::date >= %s AND fecha::date <= %s
+            ORDER BY fecha DESC
+            """,
+            params=[fecha_ini, fecha_fin]
+        )
+        
+        # ============ FILTRAR EN MEMORIA CON PANDAS ============ #
+        if not data.empty:
+            if filtro_val == "Operarios":
+                data = data[data['puesto'] == 'Operario Catastral']
+            elif filtro_val == "Profesional Jurídico":
+                data = data[data['puesto'] == 'Profesional Jurídico']
+            elif filtro_val == "Propio":
+                data = data[data['usuario'] == usuario]
+            elif filtro_val == "Personal Asignado":
+                data = data[data['supervisor'] == nombre_usuario]
+            elif filtro_val == "Reportados":
+                data = data[data['reporte'] == nombre_usuario]
+            # "Todos" no necesita filtro adicional
+        
         ph_dataframe = st.empty()
         placeholders_contenido.append(ph_dataframe)
         ph_dataframe.dataframe(data)
@@ -317,73 +279,31 @@ def Capacitacion(usuario, puesto):
             key="filtro_8"
         )
 
-        # Cargar datos según filtro
-        if filtro_val == "Todos":
-            data = fetch_df(
-                """
-                SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
-                       fecha, tema, horas, observaciones, reporte
-                FROM public.capacitaciones
-                WHERE fecha::date >= %s AND fecha::date <= %s
-                ORDER BY fecha DESC
-                """,
-                params=[fecha_ini, fecha_fin]
-            )
-        elif filtro_val == "Operarios":
-            data = fetch_df(
-                """
-                SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
-                       fecha, tema, horas, observaciones, reporte
-                FROM public.capacitaciones
-                WHERE puesto = 'Operario Catastral' AND fecha::date >= %s AND fecha::date <= %s
-                ORDER BY fecha DESC
-                """,
-                params=[fecha_ini, fecha_fin]
-            )
-        elif filtro_val == "Personal Jurídico":
-            data = fetch_df(
-                """
-                SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
-                       fecha, tema, horas, observaciones, reporte
-                FROM public.capacitaciones
-                WHERE puesto = 'Profesional Jurídico' AND fecha::date >= %s AND fecha::date <= %s
-                ORDER BY fecha DESC
-                """,
-                params=[fecha_ini, fecha_fin]
-            )
-        elif filtro_val == "Propio":
-            data = fetch_df(
-                """
-                SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
-                       fecha, tema, horas, observaciones, reporte
-                FROM public.capacitaciones
-                WHERE usuario = %s AND fecha::date >= %s AND fecha::date <= %s
-                ORDER BY fecha DESC
-                """,
-                params=[usuario, fecha_ini, fecha_fin]
-            )
-        elif filtro_val == "Personal Asignado":
-            data = fetch_df(
-                """
-                SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
-                       fecha, tema, horas, observaciones, reporte
-                FROM public.capacitaciones
-                WHERE supervisor = %s AND fecha::date >= %s AND fecha::date <= %s
-                ORDER BY fecha DESC
-                """,
-                params=[nombre_usuario, fecha_ini, fecha_fin]
-            )
-        elif filtro_val == "Reportados":
-            data = fetch_df(
-                """
-                SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
-                       fecha, tema, horas, observaciones, reporte
-                FROM public.capacitaciones
-                WHERE reporte = %s AND fecha::date >= %s AND fecha::date <= %s
-                ORDER BY fecha DESC
-                """,
-                params=[nombre_usuario, fecha_ini, fecha_fin]
-            )
+        # ============ UNA SOLA CONSULTA A LA BD ============ #
+        data = fetch_df(
+            """
+            SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
+                   fecha, tema, horas, observaciones, reporte
+            FROM public.capacitaciones
+            WHERE fecha::date >= %s AND fecha::date <= %s
+            ORDER BY fecha DESC
+            """,
+            params=[fecha_ini, fecha_fin]
+        )
+        
+        # ============ FILTRAR EN MEMORIA CON PANDAS ============ #
+        if not data.empty:
+            if filtro_val == "Operarios":
+                data = data[data['puesto'] == 'Operario Catastral']
+            elif filtro_val == "Personal Jurídico":
+                data = data[data['puesto'] == 'Profesional Jurídico']
+            elif filtro_val == "Propio":
+                data = data[data['usuario'] == usuario]
+            elif filtro_val == "Personal Asignado":
+                data = data[data['supervisor'] == nombre_usuario]
+            elif filtro_val == "Reportados":
+                data = data[data['reporte'] == nombre_usuario]
+            # "Todos" no necesita filtro adicional
 
         ph_dataframe = st.empty()
         placeholders_contenido.append(ph_dataframe)
