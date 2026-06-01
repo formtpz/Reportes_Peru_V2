@@ -213,7 +213,7 @@ def CC_Vinculacion_Precampo(usuario, puesto):
                         else:
                             st.warning(f'⚠️ {actualizaciones_exitosas} exitoso(s), {actualizaciones_fallidas} fallido(s)')
                         
-                        st.rerun()  # Recargar para reflejar los cambios
+                        st.rerun()  # Recargar para reflejar los cambios en la tabla
                     else:
                         st.warning("⚠️ No se seleccionó ningún registro para actualizar. Marque los checkboxes correspondientes.")
         else:
@@ -324,4 +324,3 @@ def CC_Vinculacion_Precampo(usuario, puesto):
         )
         
         st.success('✅ Reporte enviado correctamente')
-        st.rerun()  # Recargar para actualizar la tabla automáticamente
