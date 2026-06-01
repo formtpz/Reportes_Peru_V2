@@ -38,6 +38,26 @@ def CC_Postcampo(usuario,puesto):
   placeholder8_3 = st.empty()
   control_calidad_postcampo_3 = placeholder8_3.title(":blue[Control de Calidad Postcampo]")
 
+  # ----- NUEVO: Toggle para marcar como "Corregido por QC" ----- #
+  placeholder_corregido_qc = st.empty()
+  corregido_qc = placeholder_corregido_qc.checkbox(
+      "Marcar como Corregido por QC",
+      value=False,
+      key="corregido_qc_toggle_postcampo",
+      help="Active esta opción si el reporte ya fue corregido por Control de Calidad y NO debe enviarse al operador"
+  )
+  
+  # Advertencia cuando el toggle está activo
+  if corregido_qc:
+      st.warning(
+          "⚠️ ATENCIÓN: Este reporte no se enviará al operador para ser corregido. "
+          "Se marcará como 'Corregido por QC' directamente."
+      )
+  
+  # Determinar el valor del estado según el toggle
+  estado_reporte = "Corregido por QC" if corregido_qc else "N/A"
+  # ----- FIN NUEVO ----- #
+
   default_date_3 = datetime.now(pytz.timezone('America/Guatemala'))
 
   placeholder9_3= st.empty()
@@ -199,6 +219,7 @@ def CC_Postcampo(usuario,puesto):
     placeholder6_3.empty()
     placeholder7_3.empty()
     placeholder8_3.empty()
+    placeholder_corregido_qc.empty()
     placeholder9_3.empty()
     placeholder10_3.empty()
     placeholder11_3.empty()
@@ -241,6 +262,7 @@ def CC_Postcampo(usuario,puesto):
     placeholder6_3.empty()
     placeholder7_3.empty()
     placeholder8_3.empty()
+    placeholder_corregido_qc.empty()
     placeholder9_3.empty()
     placeholder10_3.empty()
     placeholder11_3.empty()
@@ -269,6 +291,7 @@ def CC_Postcampo(usuario,puesto):
     placeholder6_3.empty()
     placeholder7_3.empty()
     placeholder8_3.empty()
+    placeholder_corregido_qc.empty()
     placeholder9_3.empty()
     placeholder10_3.empty()
     placeholder11_3.empty()
@@ -297,6 +320,7 @@ def CC_Postcampo(usuario,puesto):
     placeholder6_3.empty()
     placeholder7_3.empty()
     placeholder8_3.empty()
+    placeholder_corregido_qc.empty()
     placeholder9_3.empty()
     placeholder10_3.empty()
     placeholder11_3.empty()
@@ -325,6 +349,7 @@ def CC_Postcampo(usuario,puesto):
     placeholder6_3.empty()
     placeholder7_3.empty()
     placeholder8_3.empty()
+    placeholder_corregido_qc.empty()
     placeholder9_3.empty()
     placeholder10_3.empty()
     placeholder11_3.empty()
@@ -353,6 +378,7 @@ def CC_Postcampo(usuario,puesto):
     placeholder6_3.empty()
     placeholder7_3.empty()
     placeholder8_3.empty()
+    placeholder_corregido_qc.empty()
     placeholder9_3.empty()
     placeholder10_3.empty()
     placeholder11_3.empty()
@@ -411,7 +437,7 @@ def CC_Postcampo(usuario,puesto):
       """,
       params=[
         marca_3, usuario, nombre_3, puesto, supervisor_3, "Control de Calidad Postcampo", fecha_3, semana_3, año_3, distrito_3, tipo_3, 0, aprobados_3, rechazados_3, horas_3,
-        manzana_3, sector_3, numero_lote_3, "N/A", 0.0, unidades_catastrales_3, 0, "N/A", 0, 0, "N/A", "N/A",
+        manzana_3, sector_3, numero_lote_3, estado_reporte, 0.0, unidades_catastrales_3, 0, "N/A", 0, 0, "N/A", "N/A",
         "N/A", horas_bi, 0, operador_3, 0, 0, tipos_de_errores_3, conteo_3
       ],
     )
