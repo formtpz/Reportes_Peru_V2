@@ -16,7 +16,7 @@ def limpiar_placeholders(lista_placeholders):
 
 def navegar_a_procesos(usuario, puesto):
     """Redirige a Procesos según perfil del usuario."""
-    perfil_info = fetch_one("SELECT perfil FROM usuarios WHERE usuario = %s", params=[usuario])
+    perfil_info = fetch_one("SELECT perfil FROM public.usuarios WHERE usuario = %s", params=[usuario])
     perfil = str(perfil_info["perfil"]) if perfil_info else "1"
     if perfil == "1":
         Procesos.Procesos1(usuario, puesto)
@@ -28,7 +28,7 @@ def navegar_a_procesos(usuario, puesto):
 
 def Capacitacion(usuario, puesto):
     # Obtener nombre completo del usuario
-    nombre_df = fetch_df("SELECT nombre FROM usuarios WHERE usuario = %s", params=[usuario])
+    nombre_df = fetch_df("SELECT nombre FROM public.usuarios WHERE usuario = %s", params=[usuario])
     nombre_usuario = nombre_df.loc[0, 'nombre'] if not nombre_df.empty else ""
 
     # --- Sidebar (común a todos los perfiles) ---
@@ -75,7 +75,7 @@ def Capacitacion(usuario, puesto):
         ph_registro.subheader("Registro")
 
         # Cargar lista de personal activo
-        df_personal = fetch_df("SELECT nombre FROM usuarios WHERE estado = 'Activo'")
+        df_personal = fetch_df("SELECT nombre FROM public.usuarios WHERE estado = 'Activo'")
         personal_opciones = df_personal["nombre"].tolist() if not df_personal.empty else []
 
         ph_personal = st.empty()
@@ -138,7 +138,7 @@ def Capacitacion(usuario, puesto):
                 """
                 SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
                        fecha, tema, horas, observaciones, reporte
-                FROM capacitaciones
+                FROM public.capacitaciones
                 WHERE fecha::date >= %s AND fecha::date <= %s
                 ORDER BY fecha DESC
                 """,
@@ -149,7 +149,7 @@ def Capacitacion(usuario, puesto):
                 """
                 SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
                        fecha, tema, horas, observaciones, reporte
-                FROM capacitaciones
+                FROM public.capacitaciones
                 WHERE puesto = 'Operario Catastral' AND fecha::date >= %s AND fecha::date <= %s
                 ORDER BY fecha DESC
                 """,
@@ -160,7 +160,7 @@ def Capacitacion(usuario, puesto):
                 """
                 SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
                        fecha, tema, horas, observaciones, reporte
-                FROM capacitaciones
+                FROM public.capacitaciones
                 WHERE puesto = 'Profesional Jurídico' AND fecha::date >= %s AND fecha::date <= %s
                 ORDER BY fecha DESC
                 """,
@@ -171,7 +171,7 @@ def Capacitacion(usuario, puesto):
                 """
                 SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
                        fecha, tema, horas, observaciones, reporte
-                FROM capacitaciones
+                FROM public.capacitaciones
                 WHERE usuario = %s AND fecha::date >= %s AND fecha::date <= %s
                 ORDER BY fecha DESC
                 """,
@@ -182,7 +182,7 @@ def Capacitacion(usuario, puesto):
                 """
                 SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
                        fecha, tema, horas, observaciones, reporte
-                FROM capacitaciones
+                FROM public.capacitaciones
                 WHERE supervisor = %s AND fecha::date >= %s AND fecha::date <= %s
                 ORDER BY fecha DESC
                 """,
@@ -193,7 +193,7 @@ def Capacitacion(usuario, puesto):
                 """
                 SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
                        fecha, tema, horas, observaciones, reporte
-                FROM capacitaciones
+                FROM public.capacitaciones
                 WHERE reporte = %s AND fecha::date >= %s AND fecha::date <= %s
                 ORDER BY fecha DESC
                 """,
@@ -216,7 +216,7 @@ def Capacitacion(usuario, puesto):
                         user_info = fetch_one(
                             """
                             SELECT usuario, puesto, supervisor
-                            FROM usuarios
+                            FROM public.usuarios
                             WHERE nombre = %s
                             """,
                             params=[nombre]
@@ -224,7 +224,7 @@ def Capacitacion(usuario, puesto):
                         if user_info:
                             execute(
                                 """
-                                INSERT INTO capacitaciones
+                                INSERT INTO public.capacitaciones
                                     (marca, usuario, nombre, puesto, supervisor, fecha, tema, horas, observaciones, reporte)
                                 VALUES
                                     (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -257,7 +257,7 @@ def Capacitacion(usuario, puesto):
         # Personal asignado al supervisor + el mismo supervisor
         df_personal = fetch_df(
             """
-            SELECT nombre FROM usuarios
+            SELECT nombre FROM public.usuarios
             WHERE estado = 'Activo' AND (supervisor = %s OR usuario = %s)
             """,
             params=[nombre_usuario, usuario]
@@ -323,7 +323,7 @@ def Capacitacion(usuario, puesto):
                 """
                 SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
                        fecha, tema, horas, observaciones, reporte
-                FROM capacitaciones
+                FROM public.capacitaciones
                 WHERE fecha::date >= %s AND fecha::date <= %s
                 ORDER BY fecha DESC
                 """,
@@ -334,7 +334,7 @@ def Capacitacion(usuario, puesto):
                 """
                 SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
                        fecha, tema, horas, observaciones, reporte
-                FROM capacitaciones
+                FROM public.capacitaciones
                 WHERE puesto = 'Operario Catastral' AND fecha::date >= %s AND fecha::date <= %s
                 ORDER BY fecha DESC
                 """,
@@ -345,7 +345,7 @@ def Capacitacion(usuario, puesto):
                 """
                 SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
                        fecha, tema, horas, observaciones, reporte
-                FROM capacitaciones
+                FROM public.capacitaciones
                 WHERE puesto = 'Profesional Jurídico' AND fecha::date >= %s AND fecha::date <= %s
                 ORDER BY fecha DESC
                 """,
@@ -356,7 +356,7 @@ def Capacitacion(usuario, puesto):
                 """
                 SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
                        fecha, tema, horas, observaciones, reporte
-                FROM capacitaciones
+                FROM public.capacitaciones
                 WHERE usuario = %s AND fecha::date >= %s AND fecha::date <= %s
                 ORDER BY fecha DESC
                 """,
@@ -367,7 +367,7 @@ def Capacitacion(usuario, puesto):
                 """
                 SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
                        fecha, tema, horas, observaciones, reporte
-                FROM capacitaciones
+                FROM public.capacitaciones
                 WHERE supervisor = %s AND fecha::date >= %s AND fecha::date <= %s
                 ORDER BY fecha DESC
                 """,
@@ -378,7 +378,7 @@ def Capacitacion(usuario, puesto):
                 """
                 SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
                        fecha, tema, horas, observaciones, reporte
-                FROM capacitaciones
+                FROM public.capacitaciones
                 WHERE reporte = %s AND fecha::date >= %s AND fecha::date <= %s
                 ORDER BY fecha DESC
                 """,
@@ -400,7 +400,7 @@ def Capacitacion(usuario, puesto):
                         user_info = fetch_one(
                             """
                             SELECT usuario, puesto, supervisor
-                            FROM usuarios
+                            FROM public.usuarios
                             WHERE nombre = %s
                             """,
                             params=[nombre]
@@ -408,7 +408,7 @@ def Capacitacion(usuario, puesto):
                         if user_info:
                             execute(
                                 """
-                                INSERT INTO capacitaciones
+                                INSERT INTO public.capacitaciones
                                     (marca, usuario, nombre, puesto, supervisor, fecha, tema, horas, observaciones, reporte)
                                 VALUES
                                     (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -450,7 +450,7 @@ def Capacitacion(usuario, puesto):
             """
             SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
                    fecha, tema, horas, observaciones, reporte
-            FROM capacitaciones
+            FROM public.capacitaciones
             WHERE usuario = %s AND fecha::date >= %s AND fecha::date <= %s
             ORDER BY fecha DESC
             """,
