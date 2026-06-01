@@ -151,6 +151,75 @@ def CC_Vinculacion_Precampo(usuario, puesto):
         horas = st.number_input("Cantidad de Horas Trabajadas en el Proceso", min_value=0.0, key="horas_3")
         
         reporte_btn = st.button("Generar Reporte", key="reporte_3")
+        
+        # ============ TABLA DE REGISTROS PENDIENTES (SIEMPRE VISIBLE) ============ #
+        st.markdown("---")
+        st.subheader("📋 Registros pendientes de revisión")
+        
+        # Usar la función de db_core para obtener registros pendientes
+        df_pendientes = fetch_registros_corregidos_pendientes(usuario)
+        
+        if not df_pendientes.empty:
+            # Agregar columna para el checkbox de revisión
+            df_pendientes['marcar_revisado'] = False
+            
+            # Mostrar información de cantidad
+            st.info(f"Se encontraron {len(df_pendientes)} registro(s) pendiente(s) de revisión")
+            
+            # Mostrar tabla editable
+            edited_df = st.data_editor(
+                df_pendientes,
+                column_config={
+                    "id": st.column_config.NumberColumn("ID", disabled=True),
+                    "marca": st.column_config.DatetimeColumn("Fecha Registro", disabled=True),
+                    "fecha": st.column_config.DateColumn("Fecha", disabled=True),
+                    "distrito": st.column_config.TextColumn("Distrito", disabled=True),
+                    "manzana": st.column_config.TextColumn("Manzana", disabled=True),
+                    "sector": st.column_config.TextColumn("Sector", disabled=True),
+                    "numero_lote": st.column_config.TextColumn("Lotes", disabled=True),
+                    "operador_cc": st.column_config.TextColumn("Operador CC", disabled=True),
+                    "tipo_de_errores": st.column_config.TextColumn("Tipo de Errores", disabled=True),
+                    "estado": st.column_config.TextColumn("Estado Actual", disabled=True),
+                    "marcar_revisado": st.column_config.CheckboxColumn(
+                        "Marcar como Revisado",
+                        help="Seleccione para cambiar el estado a 'revisado'"
+                    )
+                },
+                hide_index=True,
+                key="tabla_revision_cc"
+            )
+            
+            # Botón para guardar cambios
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button("💾 Guardar cambios de estado", key="guardar_revision_cc", use_container_width=True):
+                    # Identificar registros marcados para actualizar
+                    registros_a_actualizar = edited_df[edited_df['marcar_revisado'] == True]
+                    
+                    if len(registros_a_actualizar) > 0:
+                        actualizaciones_exitosas = 0
+                        actualizaciones_fallidas = 0
+                        
+                        # Actualizar cada registro marcado usando la función de db_core
+                        for _, row in registros_a_actualizar.iterrows():
+                            if actualizar_estado_revision(row['id']):
+                                actualizaciones_exitosas += 1
+                            else:
+                                actualizaciones_fallidas += 1
+                        
+                        # Mostrar resultado
+                        if actualizaciones_fallidas == 0:
+                            st.success(f'✅ {actualizaciones_exitosas} registro(s) actualizado(s) a "revisado" exitosamente')
+                        else:
+                            st.warning(f'⚠️ {actualizaciones_exitosas} exitoso(s), {actualizaciones_fallidas} fallido(s)')
+                        
+                        st.rerun()  # Recargar para reflejar los cambios
+                    else:
+                        st.warning("⚠️ No se seleccionó ningún registro para actualizar. Marque los checkboxes correspondientes.")
+        else:
+            st.info("ℹ️ No hay registros pendientes de revisión con estado 'corregido' en este momento.")
+        
+        # ============ FIN TABLA ============ #
     
     # ----- Navegación ----- #
     
@@ -255,72 +324,4 @@ def CC_Vinculacion_Precampo(usuario, puesto):
         )
         
         st.success('✅ Reporte enviado correctamente')
-        
-        # ============ NUEVA SECCIÓN: TABLA DE REGISTROS PENDIENTES DE REVISIÓN ============ #
-        st.markdown("---")
-        st.subheader("📋 Registros pendientes de revisión")
-        
-        # Usar la función de db_core para obtener registros pendientes
-        df_pendientes = fetch_registros_corregidos_pendientes(usuario)
-        
-        if not df_pendientes.empty:
-            # Agregar columna para el checkbox de revisión
-            df_pendientes['marcar_revisado'] = False
-            
-            # Mostrar información de cantidad
-            st.info(f"Se encontraron {len(df_pendientes)} registro(s) pendiente(s) de revisión")
-            
-            # Mostrar tabla editable
-            edited_df = st.data_editor(
-                df_pendientes,
-                column_config={
-                    "id": st.column_config.NumberColumn("ID", disabled=True),
-                    "marca": st.column_config.DatetimeColumn("Fecha Registro", disabled=True),
-                    "fecha": st.column_config.DateColumn("Fecha", disabled=True),
-                    "distrito": st.column_config.TextColumn("Distrito", disabled=True),
-                    "manzana": st.column_config.TextColumn("Manzana", disabled=True),
-                    "sector": st.column_config.TextColumn("Sector", disabled=True),
-                    "numero_lote": st.column_config.TextColumn("Lotes", disabled=True),
-                    "operador_cc": st.column_config.TextColumn("Operador CC", disabled=True),
-                    "tipo_de_errores": st.column_config.TextColumn("Tipo de Errores", disabled=True),
-                    "estado": st.column_config.TextColumn("Estado Actual", disabled=True),
-                    "marcar_revisado": st.column_config.CheckboxColumn(
-                        "Marcar como Revisado",
-                        help="Seleccione para cambiar el estado a 'revisado'"
-                    )
-                },
-                hide_index=True,
-                key="tabla_revision_cc"
-            )
-            
-            # Botón para guardar cambios
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
-                if st.button("💾 Guardar cambios de estado", key="guardar_revision_cc", use_container_width=True):
-                    # Identificar registros marcados para actualizar
-                    registros_a_actualizar = edited_df[edited_df['marcar_revisado'] == True]
-                    
-                    if len(registros_a_actualizar) > 0:
-                        actualizaciones_exitosas = 0
-                        actualizaciones_fallidas = 0
-                        
-                        # Actualizar cada registro marcado usando la función de db_core
-                        for _, row in registros_a_actualizar.iterrows():
-                            if actualizar_estado_revision(row['id']):
-                                actualizaciones_exitosas += 1
-                            else:
-                                actualizaciones_fallidas += 1
-                        
-                        # Mostrar resultado
-                        if actualizaciones_fallidas == 0:
-                            st.success(f'✅ {actualizaciones_exitosas} registro(s) actualizado(s) a "revisado" exitosamente')
-                        else:
-                            st.warning(f'⚠️ {actualizaciones_exitosas} exitoso(s), {actualizaciones_fallidas} fallido(s)')
-                        
-                        st.rerun()  # Recargar para reflejar los cambios
-                    else:
-                        st.warning("⚠️ No se seleccionó ningún registro para actualizar. Marque los checkboxes correspondientes.")
-        else:
-            st.info("ℹ️ No hay registros pendientes de revisión con estado 'corregido' en este momento.")
-        
-        # ============ FIN NUEVA SECCIÓN ============ #
+        st.rerun()  # Recargar para actualizar la tabla automáticamente
