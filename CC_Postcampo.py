@@ -6,8 +6,7 @@ from datetime import datetime
 import pytz
 import Procesos,Historial,Capacitacion,Otros_Registros,Bonos_Extras,Salir
 from Autenticacion import obtener_usuario_activo
-from db_core import execute
-from db_core import fetch_operadores_cc
+from db_core import execute, fetch_operadores_cc, fetch_registros_corregidos_pendientes, actualizar_estado_revision
 
 def CC_Postcampo(usuario,puesto):
 
@@ -53,9 +52,7 @@ def CC_Postcampo(usuario,puesto):
   placeholder12_3= st.empty()
   sector_3= placeholder12_3.selectbox("Sector", options=("01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65","66","67","68","69","70","71","72","73","74","75","76","77","78","79","80","81","82","83","84","85","86","87","88","89","90","91","92","93","94","95","96","97","98","99","100","101","102","103","104","105","106","107","108","109","110","111","112","113","114","115","116","117","118","119","120"),key="sector_3")
 
-  #placeholder13_3= st.empty()
-  #numero_lote_3= placeholder13_3.multiselect("Número de Lote", options=("Todos","001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020", "021", "022", "023", "024", "025", "026", "027", "028", "029", "030", "031", "032", "033", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "072", "073", "074", "075", "076", "077", "078", "079", "080", "081", "082", "083", "084", "085", "086", "087", "088", "089", "090", "091", "092", "093", "094", "095", "096", "097", "098", "099", "100", "101", "102", "103", "104", "105", "106", "107", "108", "109", "110", "111", "112", "113", "114", "115", "116", "117", "118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "140", "141", "142", "143", "144", "145", "146", "147", "148", "149", "150", "151", "152", "153", "154", "155", "156", "157", "158", "159", "160", "161", "162", "163", "164", "165", "166", "167", "168", "169", "170", "171", "172", "173", "174", "175", "176", "177", "178", "179", "180", "181", "182", "183", "184", "185", "186", "187", "188", "189", "190", "191", "192", "193", "194", "195", "196", "197", "198", "199", "200", "201", "202", "203", "204", "205", "206", "207", "208", "209", "210", "211", "212", "213", "214", "215", "216", "217", "218", "219", "220", "221", "222", "223", "224", "225", "226", "227", "228", "229", "230", "231", "232", "233", "234", "235", "236", "237", "238", "239", "240", "241", "242", "243", "244", "245", "246", "247", "248"),key="numero_lote_3")
-    # =========================
+  # =========================
   # Generar lista dinámica
   # =========================
   lotes = ["Todos"] + [f"{i:03d}" for i in range(1,249)]
@@ -119,6 +116,78 @@ def CC_Postcampo(usuario,puesto):
   placeholder20_3 = st.empty()
   reporte_3 = placeholder20_3.button("Generar Reporte",key="reporte_3")
 
+  # ============ TABLA DE REGISTROS PENDIENTES (SIEMPRE VISIBLE) ============ #
+  st.markdown("---")
+  
+  placeholder21_3 = st.empty()
+  with placeholder21_3.container():
+      st.subheader("📋 Registros pendientes de revisión")
+      
+      # Usar la función de db_core para obtener registros pendientes
+      df_pendientes = fetch_registros_corregidos_pendientes(usuario)
+      
+      if not df_pendientes.empty:
+          # Agregar columna para el checkbox de revisión
+          df_pendientes['marcar_revisado'] = False
+          
+          # Mostrar información de cantidad
+          st.info(f"Se encontraron {len(df_pendientes)} registro(s) pendiente(s) de revisión")
+          
+          # Mostrar tabla editable
+          edited_df = st.data_editor(
+              df_pendientes,
+              column_config={
+                  "id": st.column_config.NumberColumn("ID", disabled=True),
+                  "marca": st.column_config.DatetimeColumn("Fecha Registro", disabled=True),
+                  "fecha": st.column_config.DateColumn("Fecha", disabled=True),
+                  "distrito": st.column_config.TextColumn("Distrito", disabled=True),
+                  "manzana": st.column_config.TextColumn("Manzana", disabled=True),
+                  "sector": st.column_config.TextColumn("Sector", disabled=True),
+                  "numero_lote": st.column_config.TextColumn("Lotes", disabled=True),
+                  "operador_cc": st.column_config.TextColumn("Operador CC", disabled=True),
+                  "tipo_de_errores": st.column_config.TextColumn("Tipo de Errores", disabled=True),
+                  "estado": st.column_config.TextColumn("Estado Actual", disabled=True),
+                  "marcar_revisado": st.column_config.CheckboxColumn(
+                      "Marcar como Revisado",
+                      help="Seleccione para cambiar el estado a 'revisado'"
+                  )
+              },
+              hide_index=True,
+              key="tabla_revision_postcampo"
+          )
+          
+          # Botón para guardar cambios
+          col1, col2, col3 = st.columns([1, 2, 1])
+          with col2:
+              if st.button("💾 Guardar cambios de estado", key="guardar_revision_postcampo", use_container_width=True):
+                  # Identificar registros marcados para actualizar
+                  registros_a_actualizar = edited_df[edited_df['marcar_revisado'] == True]
+                  
+                  if len(registros_a_actualizar) > 0:
+                      actualizaciones_exitosas = 0
+                      actualizaciones_fallidas = 0
+                      
+                      # Actualizar cada registro marcado usando la función de db_core
+                      for _, row in registros_a_actualizar.iterrows():
+                          if actualizar_estado_revision(row['id']):
+                              actualizaciones_exitosas += 1
+                          else:
+                              actualizaciones_fallidas += 1
+                      
+                      # Mostrar resultado
+                      if actualizaciones_fallidas == 0:
+                          st.success(f'✅ {actualizaciones_exitosas} registro(s) actualizado(s) a "revisado" exitosamente')
+                      else:
+                          st.warning(f'⚠️ {actualizaciones_exitosas} exitoso(s), {actualizaciones_fallidas} fallido(s)')
+                      
+                      st.rerun()  # Recargar para reflejar los cambios en la tabla
+                  else:
+                      st.warning("⚠️ No se seleccionó ningún registro para actualizar. Marque los checkboxes correspondientes.")
+      else:
+          st.info("ℹ️ No hay registros pendientes de revisión con estado 'corregido' en este momento.")
+  
+  # ============ FIN TABLA ============ #
+
   # ----- Procesos ---- #
     
   if procesos_3:
@@ -139,9 +208,10 @@ def CC_Postcampo(usuario,puesto):
     placeholder15_3.empty()
     placeholder16_3.empty()
     placeholder17_3.empty()
-    placeholder18_3.empty()#
+    placeholder18_3.empty()
     placeholder19_3.empty()
     placeholder20_3.empty()
+    placeholder21_3.empty()
     st.session_state.Procesos=False
     st.session_state.CC_Postcampo=False
 
@@ -180,9 +250,10 @@ def CC_Postcampo(usuario,puesto):
     placeholder15_3.empty()
     placeholder16_3.empty()
     placeholder17_3.empty()
-    placeholder18_3.empty()#
+    placeholder18_3.empty()
     placeholder19_3.empty()
     placeholder20_3.empty()
+    placeholder21_3.empty()
     st.session_state.CC_Postcampo=False
     st.session_state.Historial=True
     Historial.Historial(usuario,puesto)   
@@ -207,9 +278,10 @@ def CC_Postcampo(usuario,puesto):
     placeholder15_3.empty()
     placeholder16_3.empty()
     placeholder17_3.empty()
-    placeholder18_3.empty()#
+    placeholder18_3.empty()
     placeholder19_3.empty()
     placeholder20_3.empty()
+    placeholder21_3.empty()
     st.session_state.CC_Postcampo=False
     st.session_state.Capacitacion=True
     Capacitacion.Capacitacion(usuario,puesto)
@@ -234,9 +306,10 @@ def CC_Postcampo(usuario,puesto):
     placeholder15_3.empty()
     placeholder16_3.empty()
     placeholder17_3.empty()
-    placeholder18_3.empty()#
+    placeholder18_3.empty()
     placeholder19_3.empty()
     placeholder20_3.empty()
+    placeholder21_3.empty()
     st.session_state.CC_Postcampo=False
     st.session_state.Otros_Registros=True
     Otros_Registros.Otros_Registros(usuario,puesto)
@@ -261,9 +334,10 @@ def CC_Postcampo(usuario,puesto):
     placeholder15_3.empty()
     placeholder16_3.empty()
     placeholder17_3.empty()
-    placeholder18_3.empty()#
+    placeholder18_3.empty()
     placeholder19_3.empty()
     placeholder20_3.empty()
+    placeholder21_3.empty()
     st.session_state.CC_Postcampo=False
     st.session_state.Bonos_Extras=True
     Bonos_Extras.Bonos_Extras(usuario,puesto)    
@@ -288,9 +362,10 @@ def CC_Postcampo(usuario,puesto):
     placeholder15_3.empty()
     placeholder16_3.empty()
     placeholder17_3.empty()
-    placeholder18_3.empty()#
+    placeholder18_3.empty()
     placeholder19_3.empty()
     placeholder20_3.empty()
+    placeholder21_3.empty()
     st.session_state.Ingreso = False
     st.session_state.CC_Postcampo=False
     st.session_state.Salir=True
@@ -320,19 +395,6 @@ def CC_Postcampo(usuario,puesto):
     tipos_de_errores_3 = ',' .join(tipo_de_errores_3)
 
     conteo_3 = len(tipo_de_errores_3)
-  
-      # ----- Almacenar Lote_3 según municipio seleccionado ---- #
-    
-    #lote_3_municipios = {"Cabuyaro", "Colombia", "San Luis de Cubarral"}#
-    #lote_2_municipios = {"Trinidad", "Iza", "Cuítiva"}#
-   
-    #if municipio_3 in lote_3_municipios:#
-      #lote_3 = '3'#
-    #elif municipio_3 in lote_2_municipios:#
-      #lote_3 = '2'#
-    #else:#
-      #lote_3 = '1'#
-      # ----- Fin del script ---- #
     
     execute(
       """
@@ -353,4 +415,4 @@ def CC_Postcampo(usuario,puesto):
         "N/A", horas_bi, 0, operador_3, 0, 0, tipos_de_errores_3, conteo_3
       ],
     )
-    st.success('Reporte enviado correctamente')
+    st.success('✅ Reporte enviado correctamente')
