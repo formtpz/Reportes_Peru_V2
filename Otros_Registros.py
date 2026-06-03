@@ -92,7 +92,7 @@ def Otros_Registros(usuario, puesto):
         else:  # Supervisor sin perfil 1
             # Consulta base: solo personal con supervisor = nombre_13
             data_personal = fetch_df(
-                "SELECT nombre FROM usuarios WHERE estado = 'Activo' AND supervisor = %s",
+                "SELECT nombre FROM usuarios WHERE estado = 'Activo' AND (supervisor = %s OR usuario = %s)",
                 params=[nombre_13]
             )
             
