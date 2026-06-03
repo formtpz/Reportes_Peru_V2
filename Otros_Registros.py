@@ -93,7 +93,7 @@ def Otros_Registros(usuario, puesto):
             # Consulta base: solo personal con supervisor = nombre_13
             data_personal = fetch_df(
                 "SELECT nombre FROM usuarios WHERE estado = 'Activo' AND (supervisor = %s OR usuario = %s)",
-                params=[nombre_13]
+                params=[nombre_13, usuario]
             )
             
             # Checkbox para incluir personal anterior (proceso_anterior/subproceso_anterior)
