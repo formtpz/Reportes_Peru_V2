@@ -80,25 +80,23 @@ def Otros_Registros(usuario, puesto):
     # ---------------------------
     # PERFIL COORDINADOR / SUPERVISOR / PERFIL 1
     # ---------------------------
-    # ---------------------------
-    # PERFIL COORDINADOR / SUPERVISOR / PERFIL 1
-    # ---------------------------
     if puesto in ["Coordinador", "Supervisor"] or perfil == "1":
         # Registro
         ph_sub_registro = st.empty()
         placeholders_contenido.append(ph_sub_registro)
         ph_sub_registro.subheader("Registro")
-    
+
         # Obtener lista de personal
         if puesto == "Coordinador" or perfil == "1":
             data_personal = fetch_df("SELECT nombre FROM usuarios WHERE estado = 'Activo'")
         else:  # Supervisor sin perfil 1
+            # Consulta base: solo personal con supervisor = nombre_13
             data_personal = fetch_df(
                 "SELECT nombre FROM usuarios WHERE estado = 'Activo' AND supervisor = %s",
                 params=[nombre_13]
             )
             
-            # Checkbox para incluir personal anterior
+            # Checkbox para incluir personal anterior (proceso_anterior/subproceso_anterior)
             ph_check_reciente = st.empty()
             placeholders_contenido.append(ph_check_reciente)
             incluir_recientes = ph_check_reciente.checkbox("Incluir Personal Anterior", key="incluir_recientes_13")
@@ -131,15 +129,15 @@ def Otros_Registros(usuario, puesto):
                         data_personal = pd.concat([data_personal, personal_reciente]).drop_duplicates()
         
         nombres_personal = data_personal["nombre"].tolist() if not data_personal.empty else []
-    
+
         ph_personal = st.empty()
         placeholders_contenido.append(ph_personal)
         personal_13 = ph_personal.multiselect("Personal", nombres_personal, key="personal_13")
-    
+
         ph_fecha = st.empty()
         placeholders_contenido.append(ph_fecha)
         fecha_13 = ph_fecha.date_input("Fecha", value=default_date, key="fecha_13")
-    
+
         ph_motivo = st.empty()
         placeholders_contenido.append(ph_motivo)
         motivo_13 = ph_motivo.selectbox(
@@ -153,15 +151,15 @@ def Otros_Registros(usuario, puesto):
             ),
             key="motivo_13"
         )
-    
+
         ph_horas = st.empty()
         placeholders_contenido.append(ph_horas)
         horas_13 = ph_horas.number_input("Cantidad de Horas Individuales", min_value=0.0, step=0.25, key="horas_13")
-    
+
         ph_observaciones = st.empty()
         placeholders_contenido.append(ph_observaciones)
         observaciones_13 = ph_observaciones.text_input("Observaciones", max_chars=60, key="observaciones_13")
-    
+
         ph_reporte = st.empty()
         placeholders_contenido.append(ph_reporte)
         reporte_btn = ph_reporte.button("Generar Reporte", key="reporte_13")
@@ -184,7 +182,7 @@ def Otros_Registros(usuario, puesto):
                         )
                         if not persona:
                             continue
-    
+
                         execute(
                             """
                             INSERT INTO otros_registros (
@@ -201,34 +199,34 @@ def Otros_Registros(usuario, puesto):
                     ph_mensaje.success("✅ Registro enviado correctamente")
                 except Exception as e:
                     ph_mensaje.error(f"❌ Error al guardar: {str(e)}")
-    
+
         ph_separador = st.empty()
         placeholders_contenido.append(ph_separador)
         ph_separador.markdown("_____")
-    
+
         # Historial
         ph_sub_historial = st.empty()
         placeholders_contenido.append(ph_sub_historial)
         ph_sub_historial.subheader("Historial")
-    
+
         ph_fecha_inicio = st.empty()
         placeholders_contenido.append(ph_fecha_inicio)
         fecha_inicio_val = ph_fecha_inicio.date_input("Fecha de Inicio", value=default_date, key="fecha_inicio_13")
-    
+
         ph_fecha_fin = st.empty()
         placeholders_contenido.append(ph_fecha_fin)
         fecha_fin_val = ph_fecha_fin.date_input("Fecha de Finalización", value=default_date, key="fecha_fin_13")
-    
+
         ph_filtro = st.empty()
         placeholders_contenido.append(ph_filtro)
         
         # Opciones de filtro
-        opciones_filtro = ["Todos", "Operarios", "Profesional Jurídico", "Propio", 
-                           "Personal Asignado", "Reportados"]
-        
-        # Agregar opción "Personal Reciente" si es Supervisor (no Coordinador ni perfil 1)
         if puesto == "Supervisor" and perfil != "1":
-            opciones_filtro.append("Personal Reciente")
+            opciones_filtro = ("Todos", "Operarios", "Profesional Jurídico", "Propio", 
+                               "Personal Asignado", "Reportados", "Personal Reciente")
+        else:
+            opciones_filtro = ("Todos", "Operarios", "Profesional Jurídico", "Propio", 
+                               "Personal Asignado", "Reportados")
         
         filtro_val = ph_filtro.selectbox(
             "Filtro",
@@ -300,6 +298,7 @@ def Otros_Registros(usuario, puesto):
                     else:
                         data_historial = pd.DataFrame()
             # "Todos" no necesita filtro adicional
+
     # ---------------------------
     # PERFIL OPERARIO / PROFESIONAL JURÍDICO / QC
     # ---------------------------
