@@ -140,7 +140,8 @@ def CC_Vinculacion_Precampo(usuario, puesto):
             "Tipo Errores", 
             options=("Numeración errónea o incompleta", "Errores geométricos y/o de forma", 
                     "Polígonos y/o puntos duplicados", "Omisión/Comisión de polígonos", 
-                    "Polígonos no se ajustan a ortofoto", "Omisión/Comisión de puertas"),
+                    "Polígonos no se ajustan a ortofoto", "Omisión/Comisión de puertas", "Información del lote", "Puertas", "Tipo de edifica", "Titularidad"
+                    "Unidad", "Construcciones", "Otras Instalaciones", "Bienes Comunes"),
             key="tipo_de_errores_3"
         )
         
