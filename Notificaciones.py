@@ -15,7 +15,7 @@ def mostrar_notificaciones_rechazos(usuario, nombre_operador):
     """
     
     # Obtener rechazos pendientes
-    df_rechazos = fetch_rechazos_pendientes(nombre_operador, dias=10)
+    df_rechazos = fetch_rechazos_pendientes(nombre_operador, dias=4)
     
     # DEBUG: Verificar qué está pasando
     print(f"DEBUG - Rechazos encontrados: {len(df_rechazos) if not df_rechazos.empty else 0}")
