@@ -19,7 +19,7 @@ def cargar_datos_supervisor(fecha_inicio, fecha_fin, personal, proceso, tipo, no
         """
         SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor, proceso, fecha, semana, año,
                distrito, manzana, sector, cast(edificas as float), cast(unidades_catastrales as float), tipo,
-               cast(lotes as float), cast(aprobados as float), cast(rechazados as float), operador_cc,
+               cast(lotes as float), estado, cast(aprobados as float), cast(rechazados as float), operador_cc,
                tipo_de_errores, conteo_de_errores, numero_lote, observaciones, cast(horas as float)
         FROM registro
         WHERE fecha::date >= %s AND fecha::date <= %s
