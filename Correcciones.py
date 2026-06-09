@@ -64,7 +64,7 @@ def Correcciones(usuario, puesto):
             # Obtener nombre del usuario
             # -------------------------------------------------
             df_nombre = fetch_df(
-                "SELECT nombre FROM usuarios WHERE usuario = %s",
+                "SELECT nombre FROM public.usuarios WHERE usuario = %s",
                 params=(usuario,)
             )
             nombre = df_nombre.loc[0, "nombre"] if not df_nombre.empty else ""
@@ -72,12 +72,12 @@ def Correcciones(usuario, puesto):
             # -------------------------------------------------
             # Filtro fijo: últimos 3 días
             # -------------------------------------------------
-            fecha_limite = datetime.now().date() - timedelta(days=3)
+            fecha_limite = datetime.now().date() - timedelta(days=4)
 
             # -- Registro (se filtra por usuario) --
             query_registro = """
                 SELECT *
-                FROM registro
+                FROM public.registro
                 WHERE usuario = %s AND fecha::date >= %s
                 ORDER BY fecha DESC
             """
@@ -86,7 +86,7 @@ def Correcciones(usuario, puesto):
             # -- Otros registros (se filtra por reporte = nombre) --
             query_otros = """
                 SELECT *
-                FROM otros_registros
+                FROM public.otros_registros
                 WHERE reporte = %s AND fecha::date >= %s
                 ORDER BY fecha DESC
             """
@@ -145,7 +145,7 @@ def Correcciones(usuario, puesto):
                         # Verificar que el ID exista y pertenezca al usuario
                         if tabla == "registro":
                             registro_info = fetch_one(
-                                "SELECT usuario, fecha FROM registro WHERE id = %s",
+                                "SELECT usuario, fecha FROM public.registro WHERE id = %s",
                                 params=(id_reporte,)
                             )
                             if registro_info is None:
@@ -188,7 +188,7 @@ def Correcciones(usuario, puesto):
 
                         # Verificar que no exista ya una solicitud para ese ID
                         existente = fetch_one(
-                            "SELECT 1 FROM correcciones WHERE tabla = %s AND id_asociado = %s",
+                            "SELECT 1 FROM public.correcciones WHERE tabla = %s AND id_asociado = %s",
                             params=(tabla, id_reporte)
                         )
                         if existente is not None:
@@ -220,7 +220,7 @@ def Correcciones(usuario, puesto):
 
             query_pendientes = """
                 SELECT id, fecha, tabla, id_asociado, solucion, columna, nuevo_valor, estado
-                FROM correcciones
+                FROM public.correcciones
                 WHERE usuario = %s AND estado = 'Pendiente'
                 ORDER BY fecha DESC
             """
@@ -344,7 +344,7 @@ def Correcciones(usuario, puesto):
             st.subheader("🗑️ Eliminar solicitudes pendientes erróneas")
             query_pend_del = """
                 SELECT id, fecha, tabla, id_asociado, solucion
-                FROM correcciones
+                FROM public.correcciones
                 WHERE usuario = %s AND estado = 'Pendiente'
                 ORDER BY fecha DESC
             """
@@ -364,7 +364,7 @@ def Correcciones(usuario, puesto):
                 if seleccionados:
                     if st.button("🗑️ Eliminar solicitudes seleccionadas"):
                         for id_sol in seleccionados:
-                            execute("DELETE FROM correcciones WHERE id = %s", params=(id_sol,))
+                            execute("DELETE FROM public.correcciones WHERE id = %s", params=(id_sol,))
                         st.success(f"Se eliminaron {len(seleccionados)} solicitud(es).")
                         st.rerun()
                 else:
@@ -374,7 +374,7 @@ def Correcciones(usuario, puesto):
             with st.expander("📋Paso 5) Verificar mis solicitudes (Esta es la solicitud hecha)."):
                 query_todas = """
                     SELECT id, fecha, tabla, id_asociado, solucion, columna, nuevo_valor, estado
-                    FROM correcciones
+                    FROM public.correcciones
                     WHERE usuario = %s
                     ORDER BY fecha DESC
                 """
@@ -397,7 +397,7 @@ def Correcciones(usuario, puesto):
 
             filtro = st.selectbox("Mostrar", ("Todos", "Pendiente"))
 
-            query_corr = "SELECT * FROM correcciones"
+            query_corr = "SELECT * FROM public.correcciones"
             if filtro == "Pendiente":
                 query_corr += " WHERE estado = 'Pendiente'"
 
@@ -474,7 +474,7 @@ def Correcciones(usuario, puesto):
 
         # Obtener perfil del usuario
         perfil_info = fetch_one(
-            "SELECT perfil FROM usuarios WHERE usuario = %s",
+            "SELECT perfil FROM public.usuarios WHERE usuario = %s",
             params=(usuario,)
         )
         perfil = str(perfil_info["perfil"]) if perfil_info else ""
