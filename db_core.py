@@ -2,9 +2,13 @@ import pandas as pd
 import streamlit as st
 import psycopg2
 from urllib.parse import urlparse
+import logging
 
+# Configurar logging (opcional, útil para depuración)
+logging.basicConfig(level=logging.INFO)
+
+# Leer credenciales desde los secretos de Streamlit
 uri = st.secrets.db_credentials.URI
-
 result = urlparse(uri)
 hostname = result.hostname
 database = result.path[1:]
@@ -12,9 +16,12 @@ username = result.username
 pwd = result.password
 port_id = result.port
 
-
+# -------------------------------------------------------------------
+# Gestión de conexión con recarga automática si se cierra
+# -------------------------------------------------------------------
 @st.cache_resource
 def init_connection():
+    """Crea y retorna una nueva conexión a la base de datos."""
     return psycopg2.connect(
         host=hostname,
         dbname=database,
@@ -23,34 +30,53 @@ def init_connection():
         port=port_id,
     )
 
+def get_connection():
+    """
+    Obtiene la conexión cacheada y verifica que esté abierta.
+    Si está cerrada, la recrea automáticamente.
+    """
+    conn = init_connection()
+    if conn.closed:
+        logging.info("Conexión cerrada detectada. Recreando...")
+        # Limpiar la caché de Streamlit para forzar la recreación
+        init_connection.clear()
+        conn = init_connection()
+    return conn
 
-con = init_connection()
-
-
+# -------------------------------------------------------------------
+# Funciones genéricas para consultas
+# -------------------------------------------------------------------
 def fetch_df(query: str, params=None):
-    return pd.read_sql_query(query, con=con, params=params)
-
+    """Ejecuta una consulta SELECT y retorna un DataFrame."""
+    conn = get_connection()
+    return pd.read_sql_query(query, con=conn, params=params)
 
 def fetch_one(query: str, params=None):
+    """Retorna la primera fila como diccionario, o None si no hay resultados."""
     df = fetch_df(query, params=params)
     if df.empty:
         return None
     return df.iloc[0].to_dict()
 
-
 def execute(query: str, params=None):
-    cur = con.cursor()
+    """Ejecuta una consulta que modifica datos (INSERT, UPDATE, DELETE)."""
+    conn = get_connection()
+    cur = conn.cursor()
     try:
         cur.execute(query, params)
-        con.commit()
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Error en execute: {e}")
+        raise
     finally:
         cur.close()
 
-
-
-# En db_core.py, mantenemos UNA SOLA función genérica:
-
-def fetch_operadores_cc(filtro_proceso=None, filtro_subproceso=None, filtro_proceso_anterior=None, filtro_subproceso_anterior=None):
+# -------------------------------------------------------------------
+# Funciones específicas de la lógica de negocio
+# -------------------------------------------------------------------
+def fetch_operadores_cc(filtro_proceso=None, filtro_subproceso=None, 
+                        filtro_proceso_anterior=None, filtro_subproceso_anterior=None):
     """
     Obtiene operadores para Control de Calidad con filtros específicos.
     
@@ -58,7 +84,7 @@ def fetch_operadores_cc(filtro_proceso=None, filtro_subproceso=None, filtro_proc
         filtro_proceso: Valor para columna 'proceso'
         filtro_subproceso: Lista de valores para columna 'subproceso' (IN clause)
         filtro_proceso_anterior: Valor para columna 'proceso_anterior'
-        filtro_subproceso_anterior: Lista de valores para columna 'subproceso_anterior' (IN clause)
+        filtro_subproceso_anterior: Lista de valores para columna 'subproceso_anterior'
     
     Returns:
         Lista de diccionarios con nombre y usuario
@@ -75,7 +101,6 @@ def fetch_operadores_cc(filtro_proceso=None, filtro_subproceso=None, filtro_proc
     
     # Condición 1: proceso y subproceso actuales cumplen filtros
     if filtro_proceso and filtro_subproceso:
-        # Si filtro_subproceso es una lista, usar IN; si es string, usar =
         if isinstance(filtro_subproceso, list):
             cond1 = "(proceso = %s AND subproceso IN %s)"
             params.extend([filtro_proceso, tuple(filtro_subproceso)])
@@ -94,7 +119,7 @@ def fetch_operadores_cc(filtro_proceso=None, filtro_subproceso=None, filtro_proc
             params.extend([filtro_proceso_anterior, filtro_subproceso_anterior])
         condiciones.append(cond2)
     
-    # Combinar condiciones con OR (cualquiera que cumpla alguna condición)
+    # Combinar condiciones con OR
     if condiciones:
         query += " AND (" + " OR ".join(condiciones) + ")"
     
@@ -103,12 +128,10 @@ def fetch_operadores_cc(filtro_proceso=None, filtro_subproceso=None, filtro_proc
     df = fetch_df(query, params=params)
     return df.to_dict('records') if not df.empty else []
 
-# Agregar al final de db_core.py
-# db_core.py - Versión que busca por usuario o por nombre
-
 def fetch_rechazos_pendientes(identificador, tipo='nombre', dias=10):
     """
     Obtiene los rechazos pendientes para un operador.
+    Puede buscar por nombre o por usuario.
     """
     from datetime import datetime, timedelta
     
@@ -128,16 +151,8 @@ def fetch_rechazos_pendientes(identificador, tipo='nombre', dias=10):
     
     query = """
         SELECT 
-            id,
-            fecha,
-            proceso,
-            distrito,
-            manzana,
-            sector,
-            numero_lote,
-            rechazados,
-            tipo_de_errores,
-            estado
+            id, fecha, proceso, distrito, manzana, sector, numero_lote,
+            rechazados, tipo_de_errores, estado
         FROM public.registro
         WHERE operador_cc ILIKE %s
           AND estado = 'N/A'
@@ -147,9 +162,8 @@ def fetch_rechazos_pendientes(identificador, tipo='nombre', dias=10):
     """
     return fetch_df(query, params=[nombre_buscar, fecha_limite_str])
 
-
 def fetch_rechazos_pendientes_por_usuario(usuario, dias=10):
-    """Versión simplificada que usa el usuario"""
+    """Versión simplificada que obtiene rechazos usando el nombre de usuario."""
     from datetime import datetime, timedelta
     
     query_nombre = """
@@ -167,16 +181,8 @@ def fetch_rechazos_pendientes_por_usuario(usuario, dias=10):
     
     query = """
         SELECT 
-            id,
-            fecha,
-            proceso,
-            distrito,
-            manzana,
-            sector,
-            numero_lote,
-            rechazados,
-            tipo_de_errores,
-            estado
+            id, fecha, proceso, distrito, manzana, sector, numero_lote,
+            rechazados, tipo_de_errores, estado
         FROM public.registro
         WHERE operador_cc ILIKE %s
           AND estado = 'N/A'
@@ -186,9 +192,8 @@ def fetch_rechazos_pendientes_por_usuario(usuario, dias=10):
     """
     return fetch_df(query, params=[nombre_operador, fecha_limite_str])
 
-
 def actualizar_estado_rechazo(id_registro, nuevo_estado):
-    """Solo actualiza estado a 'corregido'"""
+    """Actualiza estado a 'corregido' solo si estaba 'N/A'."""
     if nuevo_estado != 'corregido':
         return False
     
@@ -202,18 +207,13 @@ def actualizar_estado_rechazo(id_registro, nuevo_estado):
         execute(query, params=[nuevo_estado, id_registro])
         return True
     except Exception as e:
-        print(f"Error: {e}")
+        logging.error(f"Error en actualizar_estado_rechazo: {e}")
         return False
+
 def fetch_registros_corregidos_pendientes(usuario):
     """
     Obtiene los registros con estado 'corregido' para un usuario específico,
     donde el operador_cc no es 'N/A'.
-    
-    Args:
-        usuario: Usuario logueado para filtrar los registros
-    
-    Returns:
-        DataFrame con los registros pendientes de revisión
     """
     query = """
         SELECT id, marca, fecha, distrito, manzana, sector, numero_lote, 
@@ -226,17 +226,9 @@ def fetch_registros_corregidos_pendientes(usuario):
     """
     return fetch_df(query, params=[usuario])
 
-
 def actualizar_estado_revision(id_registro, nuevo_estado='revisado'):
     """
     Actualiza el estado de un registro a 'revisado' solo si actualmente está 'corregido'.
-    
-    Args:
-        id_registro: ID del registro a actualizar
-        nuevo_estado: Nuevo estado (por defecto 'revisado')
-    
-    Returns:
-        True si se actualizó correctamente, False en caso contrario
     """
     if nuevo_estado != 'revisado':
         return False
@@ -251,9 +243,5 @@ def actualizar_estado_revision(id_registro, nuevo_estado='revisado'):
         execute(query, params=[nuevo_estado, id_registro])
         return True
     except Exception as e:
-        print(f"Error al actualizar estado: {e}")
+        logging.error(f"Error al actualizar estado revisión: {e}")
         return False
-
-
-
-
