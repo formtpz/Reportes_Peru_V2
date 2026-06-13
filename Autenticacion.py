@@ -1,14 +1,4 @@
-from db_core import (
-    con,
-    hostname,
-    database,
-    username,
-    pwd,
-    port_id,
-    fetch_df,
-    fetch_one,
-)
-
+from db_core import fetch_df, fetch_one
 
 def contraseña(usuario):
     query = """
@@ -18,7 +8,6 @@ def contraseña(usuario):
           AND estado = 'Activo'
     """
     return fetch_df(query, params=[usuario])
-
 
 def obtener_usuario_activo(usuario):
     query = """
