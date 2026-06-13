@@ -150,7 +150,7 @@ def fetch_rechazos_pendientes(identificador, tipo='nombre', dias=10):
 
 def fetch_rechazos_pendientes_por_usuario(usuario, dias=10):
     """Versión simplificada que usa el usuario"""
-    from datetime import datetime, timedetime
+    from datetime import datetime, timedelta
     
     query_nombre = """
         SELECT nombre FROM public.usuarios WHERE usuario = %s AND estado = 'Activo'
