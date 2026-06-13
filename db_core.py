@@ -12,9 +12,9 @@ username = result.username
 pwd = result.password
 port_id = result.port
 
+
 @st.cache_resource
 def init_connection():
-    """Crea y cachea una única conexión a la base de datos."""
     return psycopg2.connect(
         host=hostname,
         dbname=database,
@@ -23,64 +23,32 @@ def init_connection():
         port=port_id,
     )
 
-def _get_reliable_connection():
-    """
-    Obtiene una conexión válida, recreándola si está cerrada o rota.
-    Mantiene una única conexión pero la regenera automáticamente cuando falla.
-    """
-    try:
-        conn = init_connection()
-        # Prueba de actividad (ping ligero)
-        conn.cursor().execute("SELECT 1")
-        return conn
-    except (psycopg2.InterfaceError, psycopg2.OperationalError, AttributeError) as e:
-        # La conexión existente no es válida -> forzar recreación
-        st.cache_resource.clear()  # Elimina la conexión cacheada
-        return init_connection()   # Crea una nueva
+
+con = init_connection()
+
 
 def fetch_df(query: str, params=None):
-    """Ejecuta una consulta SELECT y devuelve un DataFrame con reconexión automática."""
-    for intento in range(2):  # Máximo 2 intentos
-        try:
-            conn = _get_reliable_connection()
-            return pd.read_sql_query(query, con=conn, params=params)
-        except (psycopg2.InterfaceError, psycopg2.OperationalError) as e:
-            if intento == 0:
-                st.cache_resource.clear()  # Limpia caché y reintenta
-                continue
-            else:
-                raise e
+    return pd.read_sql_query(query, con=con, params=params)
+
 
 def fetch_one(query: str, params=None):
-    """Devuelve la primera fila de una consulta como diccionario, o None si vacío."""
     df = fetch_df(query, params=params)
     if df.empty:
         return None
     return df.iloc[0].to_dict()
 
+
 def execute(query: str, params=None):
-    """Ejecuta comandos de modificación (INSERT, UPDATE, DELETE) con reconexión automática."""
-    for intento in range(2):
-        try:
-            conn = _get_reliable_connection()
-            cur = conn.cursor()
-            cur.execute(query, params)
-            conn.commit()
-            cur.close()
-            return True
-        except (psycopg2.InterfaceError, psycopg2.OperationalError) as e:
-            if intento == 0:
-                st.cache_resource.clear()
-                continue
-            else:
-                raise e
-    return False
+    cur = con.cursor()
+    try:
+        cur.execute(query, params)
+        con.commit()
+    finally:
+        cur.close()
 
 
-# ============================================================================
-# A partir de aquí, todas tus funciones originales quedan exactamente igual.
-# No necesitan ninguna modificación porque ya usan fetch_df, fetch_one y execute.
-# ============================================================================
+
+# En db_core.py, mantenemos UNA SOLA función genérica:
 
 def fetch_operadores_cc(filtro_proceso=None, filtro_subproceso=None, filtro_proceso_anterior=None, filtro_subproceso_anterior=None):
     """
@@ -135,6 +103,8 @@ def fetch_operadores_cc(filtro_proceso=None, filtro_subproceso=None, filtro_proc
     df = fetch_df(query, params=params)
     return df.to_dict('records') if not df.empty else []
 
+# Agregar al final de db_core.py
+# db_core.py - Versión que busca por usuario o por nombre
 
 def fetch_rechazos_pendientes(identificador, tipo='nombre', dias=10):
     """
@@ -234,8 +204,6 @@ def actualizar_estado_rechazo(id_registro, nuevo_estado):
     except Exception as e:
         print(f"Error: {e}")
         return False
-
-
 def fetch_registros_corregidos_pendientes(usuario):
     """
     Obtiene los registros con estado 'corregido' para un usuario específico,
@@ -285,3 +253,7 @@ def actualizar_estado_revision(id_registro, nuevo_estado='revisado'):
     except Exception as e:
         print(f"Error al actualizar estado: {e}")
         return False
+
+
+
+
