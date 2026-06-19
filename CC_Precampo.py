@@ -204,7 +204,7 @@ def CC_Precampo(usuario,puesto):
   if procesos_3:
       ph_main.empty()
       ph_sidebar.empty()
-      st.session_state.CC_FMI = False
+      st.session_state.CC_Precampo = False
       st.session_state.Procesos = True
       
       usuario_activo = obtener_usuario_activo(usuario)
@@ -220,35 +220,35 @@ def CC_Precampo(usuario,puesto):
   elif historial_3:
       ph_main.empty()
       ph_sidebar.empty()
-      st.session_state.CC_FMI = False
+      st.session_state.CC_Precampo = False
       st.session_state.Historial = True
       Historial.Historial(usuario, puesto)
   
   elif capacitacion_3:
       ph_main.empty()
       ph_sidebar.empty()
-      st.session_state.CC_FMI = False
+      st.session_state.CC_Precampo = False
       st.session_state.Capacitacion = True
       Capacitacion.Capacitacion(usuario, puesto)
   
   elif otros_registros_3:
       ph_main.empty()
       ph_sidebar.empty()
-      st.session_state.CC_FMI = False
+      st.session_state.CC_Precampo = False
       st.session_state.Otros_Registros = True
       Otros_Registros.Otros_Registros(usuario, puesto)
   
   elif bonos_extras_3:
       ph_main.empty()
       ph_sidebar.empty()
-      st.session_state.CC_FMI = False
+      st.session_state.CC_Precampo = False
       st.session_state.Bonos_Extras = True
       Bonos_Extras.Bonos_Extras(usuario, puesto)
   
   elif salir_3:
       ph_main.empty()
       ph_sidebar.empty()
-      st.session_state.CC_FMI = False
+      st.session_state.CC_Precampo = False
       st.session_state.Ingreso = False
       st.session_state.Salir = True
       Salir.Salir()
