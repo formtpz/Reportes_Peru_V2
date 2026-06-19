@@ -92,8 +92,7 @@ def fetch_operadores_cc(filtro_proceso=None, filtro_subproceso=None,
     query = """
         SELECT DISTINCT nombre, usuario
         FROM public.usuarios
-        WHERE estado = 'Activo'
-          AND activo_en_listas = 'activo'
+        WHERE activo_en_listas = 'activo'
     """
     
     condiciones = []
