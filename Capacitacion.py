@@ -27,7 +27,7 @@ def navegar_a_procesos(usuario, puesto):
 
 
 def Capacitacion(usuario, puesto):
-    # Obtener nombre completo Y perfil del usuario (UNA SOLA CONSULTA)
+    # Obtener nombre completo Y perfil del usuario
     usuario_info = fetch_one(
         "SELECT nombre, perfil FROM public.usuarios WHERE usuario = %s", 
         params=[usuario]
@@ -35,7 +35,7 @@ def Capacitacion(usuario, puesto):
     nombre_usuario = usuario_info["nombre"] if usuario_info else ""
     perfil = str(usuario_info["perfil"]) if usuario_info else "0"
 
-    # --- Sidebar (común a todos los perfiles) ---
+    # --- Sidebar ---
     ph_sidebar = []
     ph_titulo = st.sidebar.empty()
     ph_titulo.title("Menú")
@@ -52,66 +52,47 @@ def Capacitacion(usuario, puesto):
     btn_salir = st.sidebar.empty()
     ph_sidebar.append(btn_salir)
 
-    # --- Contenido principal (depende del perfil) ---
+    # --- Contenido principal ---
     ph_main = []
     titulo = st.empty()
     ph_main.append(titulo)
     titulo.title("Capacitaciones")
 
-    # --- Nuevos elementos: subtítulo, nota y enlace ---
-    ph_subtitle = st.empty()
-    ph_main.append(ph_subtitle)
-    ph_subtitle.subheader("Llenado de bitacora de Capacitaciones SGE")
-
-    ph_note = st.empty()
-    ph_main.append(ph_note)
-    ph_note.markdown("**Nota:** Recuerde estar conectado a la VPN para poder acceder al archivo.")
-
-    # Ruta UNC (con espacios y caracteres especiales)
-    ruta_unc = r"\\srvdc02\iso\ISO - Biblioteca Publica\Programa de Capacitaciones 2026\FO.02-PAM 15 Plan de Capacitación GDP.xlsx"
-
-    # Botón para copiar la ruta al portapapeles
-    ph_copy_btn = st.empty()
-    ph_main.append(ph_copy_btn)
-    ph_copy_btn.markdown(
-        f"""
-        <button onclick="navigator.clipboard.writeText('{ruta_unc}'); alert('✅ Ruta copiada al portapapeles');" 
-                style="background-color: #4CAF50; color: white; padding: 10px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
-            📋 Copiar ruta del archivo
-        </button>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # Instrucciones claras para el usuario
-    ph_instruccion = st.empty()
-    ph_main.append(ph_instruccion)
-    ph_instruccion.info(
-        "💡 **Instrucción:** Presiona `Ctrl+R` para abrir el cuadro de **Ejecutar** en Windows, "
-        "luego pega la ruta copiada (`Ctrl+V`) y presiona **Enter** para abrir el archivo."
-    )
-
-    # Fecha por defecto para filtros
+    # Fecha por defecto
     default_date = datetime.now(pytz.timezone('America/Guatemala'))
 
-    # Variables que se usarán en los if de navegación
     data = pd.DataFrame()
     placeholders_contenido = []
-
-    # Placeholder para mensajes (se crea una vez y se reutiliza)
     ph_mensaje = st.empty()
     placeholders_contenido.append(ph_mensaje)
 
     # =========================================================
-    # COORDINADOR o PERFIL 1 (Administrador)
+    # COORDINADOR o PERFIL 1
     # =========================================================
     if puesto == "Coordinador" or perfil == "1":
-        # --- Registro de capacitación ---
+        # --- Nueva sección: subtítulo, nota y ruta copiable (solo para este perfil) ---
+        ph_subtitle = st.empty()
+        ph_main.append(ph_subtitle)
+        ph_subtitle.subheader("Llenado de bitacora de Capacitaciones SGE")
+
+        ph_note = st.empty()
+        ph_main.append(ph_note)
+        ph_note.markdown("**Nota:** Recuerde estar conectado a la VPN para poder acceder al link.")
+
+        ruta_unc = r"\\srvdc02\iso\ISO - Biblioteca Publica\Programa de Capacitaciones 2026\FO.02-PAM 15 Plan de Capacitación GDP.xlsx"
+        ph_ruta_code = st.empty()
+        ph_main.append(ph_ruta_code)
+        ph_ruta_code.code(ruta_unc, language="text")
+
+        ph_instruccion = st.empty()
+        ph_main.append(ph_instruccion)
+        ph_instruccion.markdown("**👉 Copia la ruta de arriba, luego abre Ejecutar con `Ctrl+R` y pégala (Ctrl+V) para abrir el archivo.**")
+
+        # --- Registro ---
         ph_registro = st.empty()
         placeholders_contenido.append(ph_registro)
         ph_registro.subheader("Registro")
 
-        # Cargar lista de personal activo
         df_personal = fetch_df("SELECT nombre FROM public.usuarios WHERE estado = 'Activo'")
         personal_opciones = df_personal["nombre"].tolist() if not df_personal.empty else []
 
@@ -148,7 +129,7 @@ def Capacitacion(usuario, puesto):
         placeholders_contenido.append(ph_sep)
         ph_sep.markdown("_____")
 
-        # --- Historial de capacitaciones ---
+        # --- Historial ---
         ph_hist_titulo = st.empty()
         placeholders_contenido.append(ph_hist_titulo)
         ph_hist_titulo.subheader("Historial Capacitaciones")
@@ -169,7 +150,6 @@ def Capacitacion(usuario, puesto):
             key="filtro_8"
         )
 
-        # ============ UNA SOLA CONSULTA A LA BD ============ #
         data = fetch_df(
             """
             SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
@@ -181,7 +161,6 @@ def Capacitacion(usuario, puesto):
             params=[fecha_ini, fecha_fin]
         )
         
-        # ============ FILTRAR EN MEMORIA CON PANDAS ============ #
         if not data.empty:
             if filtro_val == "Operarios":
                 data = data[data['puesto'] == 'Operario Catastral']
@@ -193,13 +172,11 @@ def Capacitacion(usuario, puesto):
                 data = data[data['supervisor'] == nombre_usuario]
             elif filtro_val == "Reportados":
                 data = data[data['reporte'] == nombre_usuario]
-            # "Todos" no necesita filtro adicional
         
         ph_dataframe = st.empty()
         placeholders_contenido.append(ph_dataframe)
         ph_dataframe.dataframe(data)
 
-        # --- Lógica del botón Generar Reporte ---
         if reporte_btn:
             if not personal_sel:
                 ph_mensaje.error("Favor ingresar el nombre de alguna persona")
@@ -207,13 +184,8 @@ def Capacitacion(usuario, puesto):
                 try:
                     marca = datetime.now(pytz.timezone('America/Guatemala')).strftime("%Y-%m-%d %H:%M:%S")
                     for nombre in personal_sel:
-                        # Obtener datos del usuario
                         user_info = fetch_one(
-                            """
-                            SELECT usuario, puesto, supervisor
-                            FROM public.usuarios
-                            WHERE nombre = %s
-                            """,
+                            "SELECT usuario, puesto, supervisor FROM public.usuarios WHERE nombre = %s",
                             params=[nombre]
                         )
                         if user_info:
@@ -221,8 +193,7 @@ def Capacitacion(usuario, puesto):
                                 """
                                 INSERT INTO public.capacitaciones
                                     (marca, usuario, nombre, puesto, supervisor, fecha, tema, horas, observaciones, reporte)
-                                VALUES
-                                    (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                                 """,
                                 params=[
                                     marca,
@@ -245,11 +216,28 @@ def Capacitacion(usuario, puesto):
     # SUPERVISOR
     # =========================================================
     elif puesto == "Supervisor":
+        # --- Nueva sección: subtítulo, nota y ruta copiable (solo para este perfil) ---
+        ph_subtitle = st.empty()
+        ph_main.append(ph_subtitle)
+        ph_subtitle.subheader("Llenado de bitacora de Capacitaciones SGE")
+
+        ph_note = st.empty()
+        ph_main.append(ph_note)
+        ph_note.markdown("**Nota:** Recuerde estar conectado a la VPN para poder acceder al link.")
+
+        ruta_unc = r"\\srvdc02\iso\ISO - Biblioteca Publica\Programa de Capacitaciones 2026\FO.02-PAM 15 Plan de Capacitación GDP.xlsx"
+        ph_ruta_code = st.empty()
+        ph_main.append(ph_ruta_code)
+        ph_ruta_code.code(ruta_unc, language="text")
+
+        ph_instruccion = st.empty()
+        ph_main.append(ph_instruccion)
+        ph_instruccion.markdown("**👉 Copia la ruta de arriba, luego abre Ejecutar con `Ctrl+R` y pégala (Ctrl+V) para abrir el archivo.**")
+
         ph_registro = st.empty()
         placeholders_contenido.append(ph_registro)
         ph_registro.subheader("Registro")
 
-        # Personal asignado al supervisor + el mismo supervisor
         df_personal = fetch_df(
             """
             SELECT nombre FROM public.usuarios
@@ -312,7 +300,6 @@ def Capacitacion(usuario, puesto):
             key="filtro_8"
         )
 
-        # ============ UNA SOLA CONSULTA A LA BD ============ #
         data = fetch_df(
             """
             SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor,
@@ -324,7 +311,6 @@ def Capacitacion(usuario, puesto):
             params=[fecha_ini, fecha_fin]
         )
         
-        # ============ FILTRAR EN MEMORIA CON PANDAS ============ #
         if not data.empty:
             if filtro_val == "Operarios":
                 data = data[data['puesto'] == 'Operario Catastral']
@@ -336,13 +322,11 @@ def Capacitacion(usuario, puesto):
                 data = data[data['supervisor'] == nombre_usuario]
             elif filtro_val == "Reportados":
                 data = data[data['reporte'] == nombre_usuario]
-            # "Todos" no necesita filtro adicional
 
         ph_dataframe = st.empty()
         placeholders_contenido.append(ph_dataframe)
         ph_dataframe.dataframe(data)
 
-        # Botón Generar Reporte
         if reporte_btn:
             if not personal_sel:
                 ph_mensaje.error("Favor ingresar el nombre de alguna persona")
@@ -351,11 +335,7 @@ def Capacitacion(usuario, puesto):
                     marca = datetime.now(pytz.timezone('America/Guatemala')).strftime("%Y-%m-%d %H:%M:%S")
                     for nombre in personal_sel:
                         user_info = fetch_one(
-                            """
-                            SELECT usuario, puesto, supervisor
-                            FROM public.usuarios
-                            WHERE nombre = %s
-                            """,
+                            "SELECT usuario, puesto, supervisor FROM public.usuarios WHERE nombre = %s",
                             params=[nombre]
                         )
                         if user_info:
@@ -363,8 +343,7 @@ def Capacitacion(usuario, puesto):
                                 """
                                 INSERT INTO public.capacitaciones
                                     (marca, usuario, nombre, puesto, supervisor, fecha, tema, horas, observaciones, reporte)
-                                VALUES
-                                    (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                                 """,
                                 params=[
                                     marca,
@@ -387,6 +366,7 @@ def Capacitacion(usuario, puesto):
     # OPERARIO / PROFESIONAL JURÍDICO / QC
     # =========================================================
     else:
+        # Aquí NO se muestra la sección de ruta, solo historial
         ph_hist_titulo = st.empty()
         placeholders_contenido.append(ph_hist_titulo)
         ph_hist_titulo.subheader("Historial")
@@ -415,7 +395,7 @@ def Capacitacion(usuario, puesto):
         ph_dataframe.dataframe(data)
 
     # =========================================================
-    # NAVEGACIÓN (común a todos los perfiles)
+    # NAVEGACIÓN
     # =========================================================
     if btn_procesos.button("Procesos", key="procesos_8"):
         limpiar_placeholders(ph_sidebar + ph_main + placeholders_contenido)
