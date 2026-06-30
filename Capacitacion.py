@@ -71,7 +71,12 @@ def Capacitacion(usuario, puesto):
     ph_main.append(ph_link)
     # Ruta UNC codificada como URL (file://) con espacios como %20
     ph_link.markdown(
-        "[Plan de Capacitación GDP](file://srvdc02/iso/ISO%20-%20Biblioteca%20Publica/Programa%20de%20Capacitaciones%2026/FO.02-PAM%2015%20Plan%20de%20Capacitaci%C3%B3n%20GDP.xlsx)"
+        """
+        <a href="file://srvdc02/iso/ISO%20-%20Biblioteca%20Publica/Programa%20de%20Capacitaciones%2026/FO.02-PAM%2015%20Plan%20de%20Capacitaci%C3%B3n%20GDP.xlsx" target="_blank">
+            📂 Plan de Capacitación GDP
+        </a>
+        """,
+        unsafe_allow_html=True
     )
 
     # Fecha por defecto para filtros
