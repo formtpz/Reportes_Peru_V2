@@ -65,18 +65,30 @@ def Capacitacion(usuario, puesto):
 
     ph_note = st.empty()
     ph_main.append(ph_note)
-    ph_note.markdown("**Nota:** Recuerde estar conectado a la VPN para poder acceder al link.")
+    ph_note.markdown("**Nota:** Recuerde estar conectado a la VPN para poder acceder al archivo.")
 
-    ph_link = st.empty()
-    ph_main.append(ph_link)
-    # Ruta UNC codificada como URL (file://) con espacios como %20
-    ph_link.markdown(
-        """
-        <a href="file://srvdc02/iso/ISO%20-%20Biblioteca%20Publica/Programa%20de%20Capacitaciones%2026/FO.02-PAM%2015%20Plan%20de%20Capacitaci%C3%B3n%20GDP.xlsx" target="_blank">
-            📂 Plan de Capacitación GDP
-        </a>
+    # Ruta UNC (con espacios y caracteres especiales)
+    ruta_unc = r"\\srvdc02\iso\ISO - Biblioteca Publica\Programa de Capacitaciones 2026\FO.02-PAM 15 Plan de Capacitación GDP.xlsx"
+
+    # Botón para copiar la ruta al portapapeles
+    ph_copy_btn = st.empty()
+    ph_main.append(ph_copy_btn)
+    ph_copy_btn.markdown(
+        f"""
+        <button onclick="navigator.clipboard.writeText('{ruta_unc}'); alert('✅ Ruta copiada al portapapeles');" 
+                style="background-color: #4CAF50; color: white; padding: 10px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
+            📋 Copiar ruta del archivo
+        </button>
         """,
         unsafe_allow_html=True
+    )
+
+    # Instrucciones claras para el usuario
+    ph_instruccion = st.empty()
+    ph_main.append(ph_instruccion)
+    ph_instruccion.info(
+        "💡 **Instrucción:** Presiona `Ctrl+R` para abrir el cuadro de **Ejecutar** en Windows, "
+        "luego pega la ruta copiada (`Ctrl+V`) y presiona **Enter** para abrir el archivo."
     )
 
     # Fecha por defecto para filtros
