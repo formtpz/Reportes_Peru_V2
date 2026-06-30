@@ -58,6 +58,22 @@ def Capacitacion(usuario, puesto):
     ph_main.append(titulo)
     titulo.title("Capacitaciones")
 
+    # --- Nuevos elementos: subtítulo, nota y enlace ---
+    ph_subtitle = st.empty()
+    ph_main.append(ph_subtitle)
+    ph_subtitle.subheader("Llenado de bitacora de Capacitaciones SGE")
+
+    ph_note = st.empty()
+    ph_main.append(ph_note)
+    ph_note.markdown("**Nota:** Recuerde estar conectado a la VPN para poder acceder al link.")
+
+    ph_link = st.empty()
+    ph_main.append(ph_link)
+    # Ruta UNC codificada como URL (file://) con espacios como %20
+    ph_link.markdown(
+        "[Plan de Capacitación GDP](file://srvdc02/iso/ISO%20-%20Biblioteca%20Publica/Programa%20de%20Capacitaciones%2026/FO.02-PAM%2015%20Plan%20de%20Capacitaci%C3%B3n%20GDP.xlsx)"
+    )
+
     # Fecha por defecto para filtros
     default_date = datetime.now(pytz.timezone('America/Guatemala'))
 
