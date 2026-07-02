@@ -284,7 +284,7 @@ def generar_resumen_calidad(data_r):
         return pd.DataFrame()
 
     resumen = data_filtrada.groupby(["operador_cc", "semana"], as_index=False)[["edificas", "aprobados", "rechazados"]].agg(np.sum)
-    resumen["porcentaje_aprobacion"] = ((resumen["aprobados"] / resumen["edificas"]) * 100).round(2).astype(str) + "%"
+    resumen["porcentaje_aprobacion"] = ((resumen["aprobados"] / (resumen["rechazados"]+resumen["aprobados"])) * 100).round(2).astype(str) + "%"
     return resumen
 
 
