@@ -19,7 +19,7 @@ def cargar_datos_supervisor(fecha_inicio, fecha_fin, personal, proceso, tipo, no
         """
         SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor, proceso, fecha, semana, año,
                distrito, manzana, sector, cast(edificas as float), cast(unidades_catastrales as float), tipo,
-               cast(lotes as float), estado, cast(aprobados as float), cast(rechazados as float), operador_cc,
+               lotes, estado, cast(aprobados as float), cast(rechazados as float), operador_cc,
                tipo_de_errores, conteo_de_errores, numero_lote, observaciones, cast(horas as float)
         FROM registro
         WHERE fecha::date >= %s AND fecha::date <= %s
@@ -91,7 +91,7 @@ def cargar_datos_operario(usuario, fecha_inicio, fecha_fin, proceso, tipo, nombr
         f"""
         SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor, proceso, fecha, semana, año,
                distrito, manzana, sector, cast(edificas as float), cast(unidades_catastrales as float), tipo,
-               cast(lotes as float), cast(aprobados as float), cast(rechazados as float), operador_cc,
+               lotes, cast(aprobados as float), cast(rechazados as float), operador_cc,
                tipo_de_errores, conteo_de_errores, numero_lote, observaciones, cast(horas as float)
         FROM registro
         WHERE {where_clause} AND fecha::date >= %s AND fecha::date <= %s
@@ -103,7 +103,7 @@ def cargar_datos_operario(usuario, fecha_inicio, fecha_fin, proceso, tipo, nombr
         """
         SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor, proceso, fecha, semana, año,
                distrito, manzana, sector, cast(edificas as float), cast(unidades_catastrales as float), tipo,
-               cast(lotes as float), cast(aprobados as float), cast(rechazados as float), operador_cc,
+               lotes, cast(aprobados as float), cast(rechazados as float), operador_cc,
                tipo_de_errores, conteo_de_errores, numero_lote, observaciones, cast(horas as float)
         FROM registro
         WHERE usuario = %s AND fecha::date >= %s AND fecha::date <= %s
@@ -115,7 +115,7 @@ def cargar_datos_operario(usuario, fecha_inicio, fecha_fin, proceso, tipo, nombr
         """
         SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor, proceso, fecha, semana, año,
                distrito, manzana, sector, cast(edificas as float), cast(unidades_catastrales as float), tipo,
-               cast(lotes as float), cast(aprobados as float), cast(rechazados as float), operador_cc,
+               lotes, cast(aprobados as float), cast(rechazados as float), operador_cc,
                tipo_de_errores, conteo_de_errores, numero_lote, observaciones, cast(horas as float)
         FROM registro
         WHERE usuario = %s AND fecha::date >= %s AND fecha::date <= %s
@@ -128,7 +128,7 @@ def cargar_datos_operario(usuario, fecha_inicio, fecha_fin, proceso, tipo, nombr
         f"""
         SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor, proceso, fecha, semana, año,
                distrito, manzana, sector, cast(edificas as float), cast(unidades_catastrales as float), tipo,
-               cast(lotes as float), cast(aprobados as float), cast(rechazados as float), operador_cc,
+               lotes, cast(aprobados as float), cast(rechazados as float), operador_cc,
                tipo_de_errores, conteo_de_errores, numero_lote, observaciones, cast(horas as float)
         FROM registro
         WHERE operador_cc = %s AND fecha::date >= %s AND fecha::date <= %s
