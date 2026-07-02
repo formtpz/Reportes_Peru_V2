@@ -66,7 +66,7 @@ def _inicializar_banderas():
         "Revision_Segregados", "Calidad_externa_XTF", "Precampo", "Precampo_Juridico", "Descarga_Partidas_Juridico",
         "Asignacion_Partidas", "CC_Precampo", "Vinculacion_Precampo", "Preparacion_Insumos", "Entregas_Postcampo",
         "Revision_Campo", "Postcampo", "CC_Postcampo", "CC_Precampo_Juridico", "CC_Vinculacion_precampo",
-        "Estado_UIT_Hito"
+        "Estado_UIT_Hito", "Masivos_QC_Vinculacion", "Masivos_QC_Postcampo"
     ]
     for key in flags:
         st.session_state[key] = False
