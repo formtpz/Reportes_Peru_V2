@@ -80,7 +80,7 @@ def Otros_Registros(usuario, puesto):
     # ---------------------------
     # PERFIL COORDINADOR / SUPERVISOR / PERFIL 1
     # ---------------------------
-    if puesto in ["Coordinador", "Supervisor"] or perfil == "1":
+    if puesto in ["Coordinador", "Supervisor", "Técnico GIS"] or perfil == "1":
         # Registro
         ph_sub_registro = st.empty()
         placeholders_contenido.append(ph_sub_registro)
