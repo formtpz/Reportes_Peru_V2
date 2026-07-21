@@ -141,7 +141,8 @@ def procesar_dataframe_excel_cc(df, opciones_operadores):
     df_procesado = pd.DataFrame()
     for nombre_requerido, nombre_real in mapeo_columnas.items():
         df_procesado[nombre_requerido] = df[nombre_real]
-
+        
+    df_procesado['operador'] = df_procesado['operador'].fillna('').astype(str)
     df_procesado['sector'] = df_procesado['sector'].apply(formatear_sector_cc)
     df_procesado['manzana'] = df_procesado['manzana'].apply(formatear_manzana_cc)
     df_procesado['numero_lote'] = df_procesado['numero_lote'].apply(
@@ -464,6 +465,7 @@ def CC_Postcampo(usuario, puesto):
 
                             if df_editado is not None and not df_editado.empty:
                                 df_editado['sector'] = df_editado['sector'].apply(formatear_sector_cc)
+                                df_editado['operador'] = df_editado['operador'].astype(str)
                                 df_editado['manzana'] = df_editado['manzana'].apply(formatear_manzana_cc)
                                 df_editado['numero_lote'] = df_editado['numero_lote'].apply(
                                     lambda x: formatear_lote_cc(x) if str(x).strip().lower() != 'todos' else 'Todos'
