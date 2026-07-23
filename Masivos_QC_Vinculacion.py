@@ -51,10 +51,13 @@ def Masivos_QC_Vinculacion(usuario, puesto):
             options=(
                 "Puertas",
                 "Puertas duplicadas",
+                "Numero puerta/interior",
                 "Sin rentas",
                 "Areas",
+                "Areas segun rentas",
                 "QGIS-SICUN (construcciones)",
                 "Pisos",
+                "Partidas",
                 "UA-Rentas",
                 "Vias",
                 "UA consecutivas",
