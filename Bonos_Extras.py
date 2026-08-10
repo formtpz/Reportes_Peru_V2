@@ -406,12 +406,33 @@ def Bonos_Extras(usuario, puesto):
         placeholders_contenido.append(ph_periodo)
         with ph_periodo.container():
             periodo_sel = st.selectbox("Periodo", options=periodos, key="periodo_bonos_9")
-
+    
+        # ---- NUEVO BLOQUE DE BONOS PARA PERFIL 3 ----
+        ph_bonos = st.empty()
+        placeholders_contenido.append(ph_bonos)
+        with ph_bonos.container():
+            st.subheader("Bonos")
+            # Seleccionamos solo a21 y a22, filtramos por usuario (a0) y periodo (a23)
+            bonos_df = fetch_df(
+                "SELECT a21, a22 FROM bonos WHERE a0 = %s AND a23 = %s",
+                params=[usuario, periodo_sel]
+            )
+            if bonos_df.empty:
+                st.error("No existen datos de bonos para mostrar")
+            else:
+                fila = bonos_df.iloc[0]
+                bono_otros = float(fila['a21']) if pd.notna(fila['a21']) else 0.0
+                bono_total = float(fila['a22']) if pd.notna(fila['a22']) else 0.0
+                df_bonos = pd.DataFrame({
+                    "Concepto": ["Bono Otros", "Bono Total"],
+                    "Monto": [bono_otros, bono_total]
+                })
+                st.dataframe(df_bonos, hide_index=True, height=150)
+    
         ph_extras = st.empty()
         placeholders_contenido.append(ph_extras)
         with ph_extras.container():
             st.subheader("Horas Extras")
-            # CORRECCIÓN: Mostrar todas las columnas como en el código viejo
             extras_df = fetch_df(
                 "SELECT marca, usuario, nombre, puesto, supervisor, tipo_reporte, justificacion, fecha, horas, semana, dia, fecha_corte, fecha_bono FROM extras WHERE nombre = %s AND tipo_reporte IN ('Extra','Horas Extra','Horas Extra Apoyo Otros Proyectos') AND fecha_bono = %s",
                 params=[nombre_9, periodo_sel]
