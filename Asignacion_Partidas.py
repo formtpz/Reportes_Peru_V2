@@ -304,7 +304,7 @@ def Asignacion_Partidas(usuario,puesto):
       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
       """,
       params=[
-        marca_3, usuario, nombre_3, puesto, supervisor_3, "precampo_3", fecha_3, semana_3, año_3, distrito_3, tipo_3, lotes_3, 0, 0, horas_3, manzana_3, sector_3, 0, estado_3, 0.0, 0, 0, "P0", 0, 0, observaciones_3, "N/A", "N/A", horas_bi, area_bi, "N/A", 0, 0, "N/A", 0
+        marca_3, usuario, nombre_3, puesto, supervisor_3, "Asignación de Partidas", fecha_3, semana_3, año_3, distrito_3, tipo_3, lotes_3, 0, 0, horas_3, manzana_3, sector_3, 0, estado_3, 0.0, 0, 0, "P0", 0, 0, observaciones_3, "N/A", "N/A", horas_bi, area_bi, "N/A", 0, 0, "N/A", 0
       ],
     )
     st.success('Reporte enviado correctamente')
