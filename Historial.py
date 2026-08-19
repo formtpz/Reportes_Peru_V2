@@ -14,7 +14,7 @@ from db_core import fetch_df
 # -------------------------------------------------------------------
 
 def cargar_datos_supervisor(fecha_inicio, fecha_fin, personal, proceso, tipo, nombre_usuario):
-    """Carga los datos para el perfil Supervisor/Coordinador según filtros."""
+    """Carga los datos para el perfil Supervisor/dor según filtros."""
     base_r = fetch_df(
         """
         SELECT cast(id as integer), marca, usuario, nombre, puesto, supervisor, proceso, fecha, semana, año,
@@ -380,7 +380,7 @@ def Historial(usuario, puesto):
     placeholders_contenido = []
 
     # Filtros según perfil
-    if puesto in ["Supervisor", "Técnico SIG", "Coordinador"]:
+    if puesto in ["Supervisor", "Técnico SIG", "Coordinador", "Ingeniero"]:
         filtro_personal = st.empty()
         placeholders_contenido.append(filtro_personal)
         filtro_proceso = st.empty()
