@@ -48,7 +48,7 @@ def Masivos_QC_Postcampo(usuario, puesto):
 
         tipo = st.selectbox(
             "Tipo",
-            options=("Ordinario", "Producción Horas Extras"),
+            options=("Ordinario", "Reproceso", "Producción Horas Extras"),
             key="tipo_mqcp"
         )
 
