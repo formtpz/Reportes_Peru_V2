@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 import psycopg2
+from psycopg2.extras import execute_values
 from urllib.parse import urlparse
 import logging
 
@@ -68,6 +69,110 @@ def execute(query: str, params=None):
     except Exception as e:
         conn.rollback()
         logging.error(f"Error en execute: {e}")
+        raise
+    finally:
+        cur.close()
+
+# -------------------------------------------------------------------
+# Funciones nuevas para INSERT con RETURNING y bulk inserts
+# -------------------------------------------------------------------
+def execute_returning(query: str, params=None):
+    """
+    Ejecuta un INSERT/UPDATE/DELETE que incluya la cláusula RETURNING
+    y devuelve el valor de la primera columna de la primera fila resultante.
+
+    Ejemplo:
+        nuevo_id = execute_returning(
+            "INSERT INTO public.registro (...) VALUES (...) RETURNING id",
+            params=[...]
+        )
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(query, params)
+        resultado = cur.fetchone()
+        conn.commit()
+        return resultado[0] if resultado else None
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Error en execute_returning: {e}")
+        raise
+    finally:
+        cur.close()
+
+def execute_many(query: str, params_list):
+    """
+    Ejecuta múltiples INSERT/UPDATE usando execute_values de psycopg2.
+    Es mucho más rápido que hacer N execute() individuales.
+
+    IMPORTANTE: 'query' debe contener exactamente UN '%s' en la cláusula VALUES
+    donde irá la lista de tuplas. execute_values lo reemplaza por la lista
+    completa de valores.
+
+    Ejemplo:
+        execute_many(
+            \"\"\"INSERT INTO public.registros_qa1 
+               (id_registro, crc, aprobados, rechazados) 
+               VALUES %s\"\"\",
+            [(1, 'CRC1', 1, 0), (1, 'CRC2', 0, 1)]
+        )
+    """
+    if not params_list:
+        return 0
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        execute_values(cur, query, params_list)
+        conn.commit()
+        return cur.rowcount
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Error en execute_many: {e}")
+        raise
+    finally:
+        cur.close()
+
+def insertar_registro_con_detalle_qa(datos_registro: dict, detalles_qa: list):
+    """
+    Inserta un registro en public.registro y sus detalles en public.registros_qa1
+    de forma atómica (una sola transacción). Si falla cualquier paso, hace rollback.
+
+    Args:
+        datos_registro: dict con {columna: valor} para el INSERT en registro.
+        detalles_qa: lista de tuplas (crc, aprobados, rechazados).
+
+    Returns:
+        id del registro insertado en public.registro.
+    """
+    columnas = ', '.join(datos_registro.keys())
+    placeholders = ', '.join(['%s'] * len(datos_registro))
+    valores = list(datos_registro.values())
+
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            f"INSERT INTO public.registro ({columnas}) VALUES ({placeholders}) RETURNING id",
+            valores
+        )
+        fila = cur.fetchone()
+        if not fila:
+            raise Exception("No se pudo obtener el id del registro insertado.")
+        id_registro = fila[0]
+
+        if detalles_qa:
+            execute_values(
+                cur,
+                "INSERT INTO public.registros_qa1 (id_registro, crc, aprobados, rechazados) VALUES %s",
+                [(id_registro, str(crc).strip(), int(ap), int(re)) for crc, ap, re in detalles_qa]
+            )
+
+        conn.commit()
+        return id_registro
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Error en insertar_registro_con_detalle_qa: {e}")
         raise
     finally:
         cur.close()
@@ -244,3 +349,8 @@ def actualizar_estado_revision(id_registro, nuevo_estado='revisado'):
     except Exception as e:
         logging.error(f"Error al actualizar estado revisión: {e}")
         return False
+
+# -------------------------------------------------------------------
+# Compatibilidad con código antiguo que hacía: from db_core import con
+# -------------------------------------------------------------------
+con = get_connection()
