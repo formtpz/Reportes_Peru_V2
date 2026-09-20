@@ -177,7 +177,7 @@ def menu_principal_por_perfil(usuario, puesto, perfil):
             limpiar_sidebar_y_contenido(ph_sidebar + ph_main + botones_procesos)
             navegar_a(Postcampo.Postcampo, usuario, puesto, "Postcampo")
             return True
-        if btn_cc_postcampo.button(":blue[Control de Calidad Postcampo]", key="cc_postcampo_2"):
+        if btn_cc_postcampo.button(":blue[Control de Calidad QA1]", key="cc_postcampo_2"):
             limpiar_sidebar_y_contenido(ph_sidebar + ph_main + botones_procesos)
             navegar_a(CC_Postcampo.CC_Postcampo, usuario, puesto, "CC_Postcampo")
             return True
