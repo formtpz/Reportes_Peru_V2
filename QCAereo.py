@@ -49,9 +49,9 @@ def QCAereo(usuario, puesto):
     )
 
     placeholder11_4 = st.empty()
-    poligono_4 = placeholder11_4.selectbox(
+    poligono_4 = placeholder11_4.text_input(
         "Polígono",
-        options=("PO-1", "PO-2"),
+        max_chars=60,
         key="poligono_4"
     )
 
