@@ -49,52 +49,66 @@ def QCAereo(usuario, puesto):
     )
 
     placeholder11_4 = st.empty()
-    poligono_4 = placeholder11_4.text_input(
+    sector_4 = placeholder11_4.selectbox(
+        "Sector",
+        options=tuple(f"{i:02d}" for i in range(1, 121)),   # "01" ... "120"
+        key="sector_4"
+    )
+
+    placeholder12_4 = st.empty()
+    manzana_4 = placeholder12_4.selectbox(
+        "Manzana",
+        options=tuple(f"{i:03d}" for i in range(1, 121)),   # "001" ... "120"
+        key="manzana_4"
+    )
+
+    placeholder13_4 = st.empty()
+    poligono_4 = placeholder13_4.text_input(
         "Polígono",
         max_chars=60,
         key="poligono_4"
     )
 
-    placeholder12_4 = st.empty()
-    tipo_4 = placeholder12_4.selectbox(
+    placeholder14_4 = st.empty()
+    tipo_4 = placeholder14_4.selectbox(
         "Tipo",
         options=("Ordinario", "Producción Horas Extras"),
         key="tipo_4"
     )
 
-    placeholder13_4 = st.empty()
-    lotes_inspeccionados_4 = placeholder13_4.number_input(
+    placeholder15_4 = st.empty()
+    lotes_inspeccionados_4 = placeholder15_4.number_input(
         "Número de Lotes Inspeccionados",
         min_value=0,
         step=1,
         key="lotes_inspeccionados_4"
     )
 
-    placeholder14_4 = st.empty()
-    unidades_catastrales_4 = placeholder14_4.number_input(
+    placeholder16_4 = st.empty()
+    unidades_catastrales_4 = placeholder16_4.number_input(
         "Cantidad de Unidades Catastrales",
         min_value=0,
         step=1,
         key="unidades_catastrales_4"
     )
 
-    placeholder15_4 = st.empty()
-    horas_4 = placeholder15_4.number_input(
+    placeholder17_4 = st.empty()
+    horas_4 = placeholder17_4.number_input(
         "Cantidad de Horas Trabajadas en el Proceso",
         min_value=0.0,
         key="horas_4"
     )
 
-    placeholder16_4 = st.empty()
-    observaciones_4 = placeholder16_4.text_input(
+    placeholder18_4 = st.empty()
+    observaciones_4 = placeholder18_4.text_input(
         "Observaciones",
         value="N/A",
         max_chars=60,
         key="observaciones_4"
     )
 
-    placeholder17_4 = st.empty()
-    reporte_4 = placeholder17_4.button("Generar Reporte", key="reporte_4")
+    placeholder19_4 = st.empty()
+    reporte_4 = placeholder19_4.button("Generar Reporte", key="reporte_4")
 
     # Lista completa para limpiar al navegar
     todos_placeholders = [
@@ -102,7 +116,7 @@ def QCAereo(usuario, puesto):
         placeholder5_4, placeholder6_4, placeholder7_4, placeholder8_4,
         placeholder9_4, placeholder10_4, placeholder11_4, placeholder12_4,
         placeholder13_4, placeholder14_4, placeholder15_4, placeholder16_4,
-        placeholder17_4,
+        placeholder17_4, placeholder18_4, placeholder19_4,
     ]
 
     def limpiar_todo():
@@ -190,7 +204,7 @@ def QCAereo(usuario, puesto):
             """,
             params=[
                 marca_4, usuario, nombre_4, puesto, supervisor_4, "QC Aereo", fecha_4, semana_4, año_4,
-                distrito_4, tipo_4, int(lotes_inspeccionados_4), 0, 0, horas_4, "0", "0",
+                distrito_4, tipo_4, int(lotes_inspeccionados_4), 0, 0, horas_4, manzana_4, sector_4,
                 "0", "N/A", 0.0, unidades_catastrales_4, 0, poligono_4,
                 0, 0, obs_final, "N/A", "N/A", horas_bi, 0.0,
                 "N/A", 0, 0, "N/A",
